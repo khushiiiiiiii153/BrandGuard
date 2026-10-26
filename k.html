@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BrandGuard - Explainable Evidence-Checked Governance Platform</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    .glass-card { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.07); }
+    .glass-modal { background: rgba(10, 15, 30, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #020617; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 9999px; }
+    .glow-cyan { box-shadow: 0 0 20px -3px rgba(6, 182, 212, 0.35); }
+    .glow-emerald { box-shadow: 0 0 20px -3px rgba(16, 185, 129, 0.35); }
+  </style>
+</head>
+<body class="h-full flex flex-col bg-slate-950 text-slate-100 antialiased selection:bg-cyan-500 selection:text-slate-950 overflow-hidden">
+
+  <!-- TOP NAVIGATION HEADER -->
+  <header class="h-16 border-b border-slate-800/80 bg-slate-900/90 px-4 md:px-6 flex items-center justify-between z-30 shrink-0 backdrop-blur-md">
+    <div class="flex items-center space-x-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-cyan-500/20 ring-1 ring-white/20">
+        <i class="fa-solid fa-shield-halved text-white text-lg"></i>
+      </div>
+      <div>
+        <div class="flex items-center space-x-2">
+          <span class="font-extrabold text-lg tracking-wider text-white">BRAND<span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">GUARD</span></span>
+          <span class="text-[10px] px-2 py-0.5 rounded-full bg-cyan-950/80 text-cyan-400 border border-cyan-800/60 font-mono font-medium">EVIDENCE-AI</span>
+        </div>
+        <p class="text-[11px] text-slate-400 hidden sm:block">Explainable Governance & Evidence Vault Engine</p>
+      </div>
+    </div>
+
+    <div class="flex items-center space-x-3 md:space-x-5">
+      <div class="hidden lg:flex items-center space-x-2 bg-slate-950/60 px-3 py-1.5 rounded-lg border border-slate-800 text-xs">
+        <span class="relative flex h-2.5 w-2.5">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+        </span>
+        <span class="text-slate-300 font-medium">Hybrid Engine: <strong class="text-emerald-400 font-semibold">Active & Synced</strong></span>
+      </div>
+
+      <div class="flex items-center space-x-2 bg-slate-900/90 border border-slate-700/80 rounded-xl p-1 shadow-inner">
+        <span class="text-xs text-slate-400 pl-2.5 font-medium hidden sm:inline-flex items-center gap-1.5">
+          <i class="fa-solid fa-user-shield text-cyan-400"></i> Role:
+        </span>
+        <select id="roleSelector" onchange="handleRoleSwitch(this.value)" class="bg-slate-950 text-cyan-400 font-semibold text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 cursor-pointer border border-slate-800 hover:border-slate-700 transition-colors">
+          <option value="creator">Creator (Draft & Verify)</option>
+          <option value="manager">Manager / Reviewer</option>
+          <option value="admin">Brand Admin (Rules & Vault)</option>
+          <option value="leadership">Leadership & Insights</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <!-- NAVIGATION TABS -->
+  <nav class="bg-slate-900/60 border-b border-slate-800 px-4 md:px-6 flex space-x-2 shrink-0 overflow-x-auto scrollbar-none">
+    <button onclick="setActiveTab('creator-tab')" id="tab-btn-creator-tab" class="tab-btn px-4 py-3 text-xs font-semibold border-b-2 border-cyan-400 text-cyan-400 flex items-center space-x-2 transition-all hover:text-cyan-300 whitespace-nowrap">
+      <i class="fa-solid fa-wand-magic-sparkles"></i>
+      <span>Content & Asset Review</span>
+    </button>
+    <button onclick="setActiveTab('manager-tab')" id="tab-btn-manager-tab" class="tab-btn px-4 py-3 text-xs font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center space-x-2 transition-all whitespace-nowrap">
+      <i class="fa-solid fa-inbox"></i>
+      <span>Approval Inbox</span>
+      <span id="inboxBadge" class="bg-amber-500/20 text-amber-400 text-[10px] px-2 py-0.5 rounded-full border border-amber-500/30 font-mono">1 Pending</span>
+    </button>
+    <button onclick="setActiveTab('admin-tab')" id="tab-btn-admin-tab" class="tab-btn px-4 py-3 text-xs font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center space-x-2 transition-all whitespace-nowrap">
+      <i class="fa-solid fa-vault"></i>
+      <span>Brand Vault & Rules</span>
+    </button>
+    <button onclick="setActiveTab('insights-tab')" id="tab-btn-insights-tab" class="tab-btn px-4 py-3 text-xs font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center space-x-2 transition-all whitespace-nowrap">
+      <i class="fa-solid fa-chart-pie"></i>
+      <span>Leadership & Insights</span>
+    </button>
+  </nav>
+
+  <!-- MAIN APP CONTAINER -->
+  <main class="flex-1 overflow-y-auto p-4 md:p-6 bg-slate-950 relative">
+
+    <!-- ==================== TAB 1: CREATOR TAB ==================== -->
+    <section id="creator-tab" class="tab-content space-y-6 max-w-7xl mx-auto">
+      <div class="glass-card p-4 rounded-xl border-l-4 border-l-cyan-500 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+        <div class="flex items-center space-x-3">
+          <div class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0">
+            <i class="fa-solid fa-lightbulb"></i>
+          </div>
+          <div>
+            <h1 class="text-xs font-bold text-white uppercase tracking-wider">Creator Workspace</h1>
+            <p class="text-xs text-slate-300">Draft marketing material, run explainable AI verification, and attach proof documents before submission.</p>
+          </div>
+        </div>
+        <div class="flex items-center space-x-2 self-end md:self-auto">
+          <button onclick="loadSampleDraft()" class="text-xs bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-slate-700 hover:border-cyan-500/50 px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 font-medium">
+            <i class="fa-solid fa-file-import text-cyan-400"></i> Load Non-Compliant Sample
+          </button>
+          <button onclick="clearCreatorForm()" class="text-xs bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-800 px-3 py-1.5 rounded-lg transition-all">
+            Clear
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-6 space-y-5">
+          <div class="glass-card p-5 rounded-2xl space-y-4 border border-slate-800/80 shadow-xl">
+            <div class="flex items-center justify-between">
+              <label class="text-xs font-bold text-slate-200 uppercase tracking-wide flex items-center gap-2">
+                <i class="fa-solid fa-pen-nib text-cyan-400"></i> Draft Copy Text
+              </label>
+              <span id="charCounter" class="text-[11px] text-slate-500 font-mono">0 chars</span>
+            </div>
+
+            <div class="relative">
+              <textarea id="draftText" oninput="handleDraftInput()" rows="7" class="w-full bg-slate-950/80 border border-slate-800 rounded-xl p-3.5 text-xs text-slate-100 focus:outline-none focus:border-cyan-500/80 focus:ring-1 focus:ring-cyan-500/50 transition-all leading-relaxed font-sans placeholder-slate-600 resize-none" placeholder="Paste your proposed ad copy, press release, or social media post here..."></textarea>
+            </div>
+
+            <div class="bg-slate-900/90 p-3.5 rounded-xl border border-slate-800/80 flex items-center justify-between">
+              <div class="flex items-center space-x-2.5">
+                <div class="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                  <i class="fa-solid fa-user-lock text-xs"></i>
+                </div>
+                <div>
+                  <p class="text-xs font-semibold text-slate-200">Privacy & PII Auto-Redaction Layer</p>
+                  <p class="text-[11px] text-slate-400">Live masks emails, phone numbers, and keys in real-time</p>
+                </div>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="redactToggle" onchange="toggleRedaction()" checked class="sr-only peer">
+                <div class="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+              </label>
+            </div>
+
+            <div id="redactPreviewBox" class="p-3 bg-slate-950/90 border border-emerald-500/20 rounded-xl text-xs space-y-1">
+              <div class="flex items-center justify-between text-[10px] text-emerald-400 font-mono uppercase tracking-wider">
+                <span><i class="fa-solid fa-eye-slash mr-1"></i> Live Sanitized Output:</span>
+                <span id="redactStatusBadge" class="bg-emerald-500/20 px-2 py-0.5 rounded text-emerald-300">Clean</span>
+              </div>
+              <p id="redactPreviewContent" class="text-slate-300 italic text-[11px] leading-relaxed break-all">No text entered...</p>
+            </div>
+
+            <div class="space-y-2">
+              <label class="text-xs font-bold text-slate-200 uppercase tracking-wide flex items-center gap-2">
+                <i class="fa-solid fa-image text-cyan-400"></i> Visual Asset Upload
+              </label>
+              <div id="dropZone" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)" onclick="triggerFileInput()" class="border-2 border-dashed border-slate-800 hover:border-cyan-500/60 rounded-xl p-5 text-center cursor-pointer bg-slate-950/50 hover:bg-slate-900/40 transition-all relative group">
+                <input type="file" id="imageInput" accept="image/*" onchange="handleImageFileSelect(event)" class="hidden">
+                <div class="flex flex-col items-center justify-center space-y-2">
+                  <div class="w-10 h-10 rounded-full bg-slate-900 group-hover:bg-cyan-500/20 border border-slate-800 group-hover:border-cyan-500/40 flex items-center justify-center text-slate-400 group-hover:text-cyan-400 transition-all">
+                    <i class="fa-solid fa-cloud-arrow-up text-lg"></i>
+                  </div>
+                  <div>
+                    <p class="text-xs text-slate-300 font-semibold" id="imageUploadLabel">Drag & Drop brand image or click to browse</p>
+                    <p class="text-[10px] text-slate-500 mt-0.5">PNG, JPG, WEBP up to 10MB (Simulates contrast & palette checks)</p>
+                  </div>
+                </div>
+              </div>
+
+              <div id="imagePreviewContainer" class="hidden glass-card p-3 rounded-xl border border-slate-800 space-y-3">
+                <div class="flex items-center space-x-3">
+                  <img id="uploadedImgThumb" src="" class="w-14 h-14 object-cover rounded-lg border border-slate-700/80 bg-slate-900">
+                  <div class="flex-1 overflow-hidden">
+                    <p id="imageFileName" class="text-xs text-slate-200 font-semibold truncate"></p>
+                    <p id="imageFileSize" class="text-[10px] text-slate-400 font-mono"></p>
+                    <div class="flex items-center space-x-2 mt-1">
+                      <span class="text-[10px] px-2 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800 font-mono">Image Ready</span>
+                    </div>
+                  </div>
+                  <button onclick="removeImage(event)" class="text-slate-400 hover:text-red-400 p-2 text-xs transition-colors" title="Remove Asset">
+                    <i class="fa-solid fa-trash-can text-sm"></i>
+                  </button>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800/80 text-[10px]">
+                  <div class="bg-slate-950/80 p-2 rounded-lg text-center border border-slate-800">
+                    <span class="text-slate-400 block mb-0.5">Contrast Ratio</span>
+                    <strong id="contrastValue" class="text-amber-400 font-mono">3.2:1 (Fail)</strong>
+                  </div>
+                  <div class="bg-slate-950/80 p-2 rounded-lg text-center border border-slate-800">
+                    <span class="text-slate-400 block mb-0.5">Brand Hex Match</span>
+                    <strong id="paletteMatchValue" class="text-emerald-400 font-mono">88% Match</strong>
+                  </div>
+                  <div class="bg-slate-950/80 p-2 rounded-lg text-center border border-slate-800">
+                    <span class="text-slate-400 block mb-0.5">Alt Text Check</span>
+                    <strong id="altTextValue" class="text-red-400 font-mono">Missing</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button onclick="runHybridReview()" class="w-full bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-slate-950 font-bold py-3 px-4 rounded-xl shadow-lg glow-cyan text-xs tracking-wider uppercase flex items-center justify-center space-x-2 transition-all transform active:scale-[0.99]">
+              <i class="fa-solid fa-wand-magic-sparkles text-sm"></i>
+              <span>Run Hybrid AI & Rule Verification</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="lg:col-span-6 space-y-4">
+          <div class="glass-card p-5 rounded-2xl border border-slate-800/80 shadow-xl min-h-[520px] flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between pb-3 border-b border-slate-800/80">
+                <div class="flex items-center space-x-2">
+                  <i class="fa-solid fa-clipboard-check text-cyan-400"></i>
+                  <h2 class="text-xs font-bold text-white uppercase tracking-wider">Evidence-Checked Audit Findings</h2>
+                </div>
+                <div id="findingSummaryBadge" class="hidden text-xs bg-slate-900 text-slate-300 px-3 py-1 rounded-full border border-slate-800 font-mono">
+                  <span id="findingCount" class="text-amber-400 font-bold">0</span> Issues Detected
+                </div>
+              </div>
+
+              <div id="findingsPlaceholder" class="flex flex-col items-center justify-center py-20 text-center space-y-4">
+                <div class="w-16 h-16 rounded-2xl bg-slate-900/80 flex items-center justify-center border border-slate-800 text-slate-600 shadow-inner">
+                  <i class="fa-solid fa-shield-cat text-3xl"></i>
+                </div>
+                <div class="max-w-xs space-y-1">
+                  <p class="text-xs font-semibold text-slate-300">Governance Engine Idle</p>
+                  <p class="text-[11px] text-slate-500">Enter copy or load a sample draft on the left and click <strong>"Run Hybrid AI Verification"</strong> to begin analysis.</p>
+                </div>
+              </div>
+
+              <div id="findingsLoading" class="hidden flex flex-col items-center justify-center py-20 text-center space-y-4">
+                <div class="relative flex items-center justify-center">
+                  <div class="inline-block animate-spin rounded-full h-12 w-12 border-2 border-cyan-400 border-t-transparent"></div>
+                  <i class="fa-solid fa-microchip text-cyan-400 text-xs absolute"></i>
+                </div>
+                <div class="space-y-1">
+                  <p class="text-xs font-bold text-cyan-400 font-mono">Executing Deterministic Rules & Vector Search...</p>
+                  <p class="text-[10px] text-slate-400">Cross-checking against Active Terminology Engine and Brand Vault</p>
+                </div>
+              </div>
+
+              <div id="findingsContainer" class="hidden space-y-3 mt-4 overflow-y-auto max-h-[460px] pr-1"></div>
+            </div>
+
+            <div id="creatorSubmitBar" class="hidden pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-3 mt-4">
+              <div class="text-xs text-slate-400 flex items-center space-x-2">
+                <i class="fa-solid fa-list-check text-cyan-400"></i>
+                <span id="resolvedStatusText" class="font-mono text-[11px]">0 of 0 issues addressed</span>
+              </div>
+              <button onclick="submitDraftToManager()" class="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-5 py-2.5 rounded-xl text-xs glow-emerald transition-all flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-paper-plane"></i>
+                <span>Submit Version to Manager Inbox</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 2: MANAGER TAB ==================== -->
+    <section id="manager-tab" class="tab-content hidden space-y-6 max-w-7xl mx-auto">
+      <div class="glass-card p-4 rounded-xl border-l-4 border-l-amber-500 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+            <i class="fa-solid fa-user-check"></i>
+          </div>
+          <div>
+            <h1 class="text-xs font-bold text-white uppercase tracking-wider">Manager Approval & Diff Inspector</h1>
+            <p class="text-xs text-slate-300">Compare creator submissions against original versions, inspect audit trails, and approve version lock.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-4 glass-card p-4 rounded-2xl border border-slate-800 space-y-3">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+            <h2 class="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+              <i class="fa-solid fa-list-ul text-amber-400"></i> Review Queue
+            </h2>
+            <span id="queueCountBadge" class="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-mono">1 Item</span>
+          </div>
+          <div id="reviewQueueList" class="space-y-2 max-h-[500px] overflow-y-auto pr-1"></div>
+        </div>
+
+        <div class="lg:col-span-8 glass-card p-5 rounded-2xl border border-slate-800 space-y-4">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+            <div>
+              <h2 id="diffTitle" class="text-sm font-bold text-white">Select a submission from the queue</h2>
+              <p id="diffSubtitle" class="text-[11px] text-slate-400">Reviewing proposed copy changes and evidence clearance</p>
+            </div>
+            <span class="text-[10px] bg-cyan-950 text-cyan-400 border border-cyan-800 px-2 py-1 rounded-md font-mono flex items-center gap-1">
+              <i class="fa-solid fa-robot"></i> Hybrid AI Verified
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between text-[11px] text-red-400 font-semibold px-1">
+                <span><i class="fa-solid fa-file-lines mr-1"></i> Original Raw Input:</span>
+                <span class="text-[10px] text-slate-500 font-mono">v1.0-raw</span>
+              </div>
+              <div class="bg-slate-950/90 border border-red-500/30 p-3.5 rounded-xl min-h-[160px] text-xs text-slate-300 leading-relaxed font-sans" id="diffOriginalText">
+                <span class="text-slate-600 italic">No item selected...</span>
+              </div>
+            </div>
+
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between text-[11px] text-emerald-400 font-semibold px-1">
+                <span><i class="fa-solid fa-shield-check mr-1"></i> Proposed Clean Version:</span>
+                <span class="text-[10px] text-emerald-500/80 font-mono">v1.1-verified</span>
+              </div>
+              <div class="bg-slate-950/90 border border-emerald-500/30 p-3.5 rounded-xl min-h-[160px] text-xs text-slate-200 leading-relaxed font-sans" id="diffProposedText">
+                <span class="text-slate-600 italic">No item selected...</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-800/80 space-y-2">
+            <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+              <i class="fa-solid fa-receipt text-cyan-400"></i> Audit Clearance Trail
+            </h3>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px] text-slate-400 font-mono">
+              <div>Rules Cleared: <strong class="text-emerald-400">2/2</strong></div>
+              <div>PII Scrubbed: <strong class="text-emerald-400">Yes</strong></div>
+              <div>Claims Proof Attached: <strong class="text-cyan-400">DOC-2026-ASCI</strong></div>
+              <div>Risk Index: <strong class="text-emerald-400">0.05 (Low)</strong></div>
+            </div>
+          </div>
+
+          <div class="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-800">
+            <button onclick="showFeedbackModal()" class="w-full sm:w-auto px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-xl text-xs font-semibold transition-all">
+              <i class="fa-solid fa-comment-dots mr-1"></i> Request Changes
+            </button>
+            <button onclick="approveContent()" class="w-full sm:w-auto px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-xs glow-emerald transition-all flex items-center justify-center gap-1.5">
+              <i class="fa-solid fa-lock"></i>
+              <span>Approve & Lock Version</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 3: BRAND ADMIN TAB ==================== -->
+    <section id="admin-tab" class="tab-content hidden space-y-6 max-w-7xl mx-auto">
+      <div class="glass-card p-4 rounded-xl border-l-4 border-l-indigo-500 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+            <i class="fa-solid fa-book-bookmark"></i>
+          </div>
+          <div>
+            <h1 class="text-xs font-bold text-white uppercase tracking-wider">Brand Governance Library & Claim Vault</h1>
+            <p class="text-xs text-slate-300">Manage terminology constraints, palette hex codes, and verified legal substantiation documents.</p>
+          </div>
+        </div>
+        <button onclick="openAddClaimModal()" class="text-xs bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-3 py-2 rounded-lg transition-all flex items-center gap-1.5 shadow-md">
+          <i class="fa-solid fa-plus"></i> Add Claim Evidence
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-5 glass-card p-5 rounded-2xl border border-slate-800 space-y-4">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+            <h2 class="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+              <i class="fa-solid fa-ban text-red-400"></i> Terminology Rules Engine
+            </h2>
+            <button onclick="promptAddRule()" class="text-[11px] text-cyan-400 hover:text-cyan-300 font-semibold">+ Add Rule</button>
+          </div>
+          <p class="text-[11px] text-slate-400">Active pattern matches and required substitutions evaluated by the verification scanner.</p>
+          <div id="rulesListContainer" class="space-y-2.5 max-h-[380px] overflow-y-auto pr-1"></div>
+        </div>
+
+        <div class="lg:col-span-7 space-y-6">
+          <div class="glass-card p-5 rounded-2xl border border-slate-800 space-y-3">
+            <h2 class="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+              <i class="fa-solid fa-palette text-cyan-400"></i> Verified Brand Color Palette
+            </h2>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+              <div onclick="copyHex('#0ea5e9')" class="p-3 bg-slate-950 border border-slate-800 rounded-xl flex items-center space-x-2.5 cursor-pointer hover:border-slate-600 transition-colors">
+                <div class="w-7 h-7 rounded-lg bg-sky-500 shrink-0"></div>
+                <div>
+                  <span class="text-xs font-bold text-white block">Sky Cyan</span>
+                  <span class="text-[10px] text-slate-400 font-mono">#0ea5e9</span>
+                </div>
+              </div>
+              <div onclick="copyHex('#0284c7')" class="p-3 bg-slate-950 border border-slate-800 rounded-xl flex items-center space-x-2.5 cursor-pointer hover:border-slate-600 transition-colors">
+                <div class="w-7 h-7 rounded-lg bg-sky-600 shrink-0"></div>
+                <div>
+                  <span class="text-xs font-bold text-white block">Deep Blue</span>
+                  <span class="text-[10px] text-slate-400 font-mono">#0284c7</span>
+                </div>
+              </div>
+              <div onclick="copyHex('#10b981')" class="p-3 bg-slate-950 border border-slate-800 rounded-xl flex items-center space-x-2.5 cursor-pointer hover:border-slate-600 transition-colors">
+                <div class="w-7 h-7 rounded-lg bg-emerald-500 shrink-0"></div>
+                <div>
+                  <span class="text-xs font-bold text-white block">Emerald Accent</span>
+                  <span class="text-[10px] text-slate-400 font-mono">#10b981</span>
+                </div>
+              </div>
+              <div onclick="copyHex('#0f172a')" class="p-3 bg-slate-950 border border-slate-800 rounded-xl flex items-center space-x-2.5 cursor-pointer hover:border-slate-600 transition-colors">
+                <div class="w-7 h-7 rounded-lg bg-slate-900 border border-slate-700 shrink-0"></div>
+                <div>
+                  <span class="text-xs font-bold text-white block">Dark Slate</span>
+                  <span class="text-[10px] text-slate-400 font-mono">#0f172a</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass-card p-5 rounded-2xl border border-slate-800 space-y-3">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+              <h2 class="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                <i class="fa-solid fa-file-shield text-emerald-400"></i> Legal Claim Substantiation Vault
+              </h2>
+              <span class="text-[10px] text-slate-400 font-mono">Registered Proof Documents</span>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs text-slate-300">
+                <thead class="bg-slate-950 text-slate-400 text-[10px] uppercase font-mono border-b border-slate-800">
+                  <tr>
+                    <th class="p-2.5">Claim Statement</th>
+                    <th class="p-2.5">Proof Document</th>
+                    <th class="p-2.5">Expiry Date</th>
+                    <th class="p-2.5 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="claimVaultTableBody" class="divide-y divide-slate-800/60 font-sans"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 4: LEADERSHIP & INSIGHTS TAB ==================== -->
+    <section id="insights-tab" class="tab-content hidden space-y-6 max-w-7xl mx-auto">
+      <div class="glass-card p-4 rounded-xl border-l-4 border-l-cyan-400 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+            <i class="fa-solid fa-chart-line"></i>
+          </div>
+          <div>
+            <h1 class="text-xs font-bold text-white uppercase tracking-wider">Executive Governance Intelligence & ROI</h1>
+            <p class="text-xs text-slate-300">Track brand risk mitigation velocity, compliance pass rates, and regulatory penalty avoidance metrics.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="glass-card p-4 rounded-2xl border border-slate-800 space-y-1">
+          <span class="text-[10px] text-slate-400 font-mono uppercase tracking-wider">Total Verified Assets</span>
+          <div class="flex items-baseline justify-between">
+            <h3 class="text-2xl font-extrabold text-white font-mono">1,482</h3>
+            <span class="text-xs text-emerald-400 font-semibold font-mono"><i class="fa-solid fa-arrow-trend-up"></i> +12.4%</span>
+          </div>
+          <p class="text-[10px] text-slate-500">Across marketing channels this month</p>
+        </div>
+        <div class="glass-card p-4 rounded-2xl border border-slate-800 space-y-1">
+          <span class="text-[10px] text-slate-400 font-mono uppercase tracking-wider">Compliance Pass Rate</span>
+          <div class="flex items-baseline justify-between">
+            <h3 class="text-2xl font-extrabold text-cyan-400 font-mono">94.8%</h3>
+            <span class="text-xs text-emerald-400 font-semibold font-mono"><i class="fa-solid fa-arrow-trend-up"></i> +3.1%</span>
+          </div>
+          <p class="text-[10px] text-slate-500">First-pass automated clearance</p>
+        </div>
+        <div class="glass-card p-4 rounded-2xl border border-slate-800 space-y-1">
+          <span class="text-[10px] text-slate-400 font-mono uppercase tracking-wider">Potential Fines Avoided</span>
+          <div class="flex items-baseline justify-between">
+            <h3 class="text-2xl font-extrabold text-emerald-400 font-mono">$340K</h3>
+            <span class="text-xs text-emerald-400 font-semibold font-mono"><i class="fa-solid fa-shield"></i> Substantiated</span>
+          </div>
+          <p class="text-[10px] text-slate-500">ASCI & FTC misleading claim flags caught</p>
+        </div>
+        <div class="glass-card p-4 rounded-2xl border border-slate-800 space-y-1">
+          <span class="text-[10px] text-slate-400 font-mono uppercase tracking-wider">Avg Approval Velocity</span>
+          <div class="flex items-baseline justify-between">
+            <h3 class="text-2xl font-extrabold text-indigo-400 font-mono">4.2 mins</h3>
+            <span class="text-xs text-emerald-400 font-semibold font-mono"><i class="fa-solid fa-bolt"></i> 8x Faster</span>
+          </div>
+          <p class="text-[10px] text-slate-500">From draft submission to lock</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-8 glass-card p-5 rounded-2xl border border-slate-800 space-y-3">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+              <i class="fa-solid fa-chart-area text-cyan-400"></i> Monthly Governance Volume & Remediation Trend
+            </h2>
+            <span class="text-[10px] text-slate-400 font-mono">Live Telemetry</span>
+          </div>
+          <div class="h-64 relative">
+            <canvas id="governanceTrendChart"></canvas>
+          </div>
+        </div>
+
+        <div class="lg:col-span-4 glass-card p-5 rounded-2xl border border-slate-800 space-y-3">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+              <i class="fa-solid fa-triangle-exclamation text-amber-400"></i> Top Flagged Violations
+            </h2>
+          </div>
+          <div class="h-64 relative flex items-center justify-center">
+            <canvas id="violationsPieChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== MODALS ==================== -->
+  <div id="feedbackModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
+    <div class="glass-modal w-full max-w-md p-6 rounded-2xl border border-slate-700 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h3 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+          <i class="fa-solid fa-comment-medical text-amber-400"></i> Request Revision from Creator
+        </h3>
+        <button onclick="closeFeedbackModal()" class="text-slate-400 hover:text-slate-200"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="space-y-2">
+        <label class="text-xs text-slate-300 block">Feedback / Compliance Guidance Notes:</label>
+        <textarea id="feedbackNotesInput" rows="4" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-cyan-500 resize-none" placeholder="Explain why this version needs adjustment..."></textarea>
+      </div>
+      <div class="flex justify-end space-x-2 pt-2">
+        <button onclick="closeFeedbackModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs">Cancel</button>
+        <button onclick="sendFeedbackToCreator()" class="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs">Send Revision Request</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="addClaimModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
+    <div class="glass-modal w-full max-w-md p-6 rounded-2xl border border-slate-700 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h3 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+          <i class="fa-solid fa-file-circle-plus text-cyan-400"></i> Register Legal Claim & Proof
+        </h3>
+        <button onclick="closeAddClaimModal()" class="text-slate-400 hover:text-slate-200"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="text-[11px] text-slate-300 block mb-1">Claim Statement:</label>
+          <input type="text" id="newClaimTitle" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-100 focus:outline-none focus:border-cyan-500" placeholder="e.g., #1 Energy Drink in Nationwide Sales">
+        </div>
+        <div>
+          <label class="text-[11px] text-slate-300 block mb-1">Proof Document Ref / URL:</label>
+          <input type="text" id="newClaimDoc" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-100 font-mono focus:outline-none focus:border-cyan-500" placeholder="DOC-2026-Nielsen-Audited.pdf">
+        </div>
+        <div>
+          <label class="text-[11px] text-slate-300 block mb-1">Expiry Date:</label>
+          <input type="date" id="newClaimExpiry" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-100 font-mono focus:outline-none focus:border-cyan-500">
+        </div>
+      </div>
+      <div class="flex justify-end space-x-2 pt-2">
+        <button onclick="closeAddClaimModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs">Cancel</button>
+        <button onclick="saveNewClaim()" class="px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-xl text-xs">Register in Vault</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== JAVASCRIPT LOGIC ==================== -->
+  <script>
+    let currentActiveTab = 'creator-tab';
+    let uploadedImageFile = null;
+    let currentFindings = [];
+    let resolvedCount = 0;
+    
+    let submissionsQueue = [
+      {
+        id: 'SUB-8902',
+        creator: 'Sarah Jenkins (Growth Mktg)',
+        title: 'Q3 Product Launch Ad Copy v1',
+        originalText: 'Our new formula guarantees 100% weight loss in 7 days! Contact support@brandx.com or call 555-0199 for instant access. #BestDrinkEver',
+        proposedText: 'Our new formula is clinically studied to support healthy weight management goals over 8 weeks. Contact verified support channels for details. #BrandXHealth',
+        rulesCleared: '2/2',
+        piiScrubbed: true,
+        claimDoc: 'DOC-2026-ASCI-Clinical.pdf',
+        riskIndex: '0.05 (Low)',
+        status: 'Pending Review',
+        timestamp: '12 mins ago'
+      }
+    ];
+
+    let claimVaultItems = [
+      { claim: '100% Organic Cotton Sourced', doc: 'DOC-2026-GOTS-Cert.pdf', expiry: '2027-12-31' },
+      { claim: 'Clinically Tested Energy Formulation', doc: 'DOC-2026-Clinical-Trial-B.pdf', expiry: '2026-11-15' },
+      { claim: 'Zero Sugar & Zero Artificial Preservatives', doc: 'DOC-2026-Lab-Analysis-Report.pdf', expiry: '2028-01-10' }
+    ];
+
+    let rulesList = [
+      { id: 1, term: 'Guarantees / Cures / 100%', replacement: 'Supports / Clinically Studied', status: 'Active (Deterministic)' },
+      { id: 2, term: 'Free / Zero Risk', replacement: 'Transparent Terms Apply', status: 'Active (Deterministic)' },
+      { id: 3, term: '#1 Best in World / India\'s No.1', replacement: 'Leading Market Provider (Requires Doc)', status: 'Active (AI Vector)' }
+    ];
+
+    window.addEventListener('DOMContentLoaded', () => {
+      renderReviewQueue();
+      renderClaimVault();
+      renderRulesList();
+      initCharts();
+      handleDraftInput();
+    });
+
+    function setActiveTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('border-cyan-400', 'text-cyan-400');
+        btn.classList.add('border-transparent', 'text-slate-400');
+      });
+
+      document.getElementById(tabId).classList.remove('hidden');
+      const activeBtn = document.getElementById(`tab-btn-${tabId}`);
+      if (activeBtn) {
+        activeBtn.classList.remove('border-transparent', 'text-slate-400');
+        activeBtn.classList.add('border-cyan-400', 'text-cyan-400');
+      }
+      currentActiveTab = tabId;
+
+      if (tabId === 'manager-tab' && submissionsQueue.length > 0) {
+        selectSubmission(submissionsQueue[0].id);
+      }
+    }
+
+    function handleRoleSwitch(role) {
+      if (role === 'creator') setActiveTab('creator-tab');
+      else if (role === 'manager') setActiveTab('manager-tab');
+      else if (role === 'admin') setActiveTab('admin-tab');
+      else if (role === 'leadership') setActiveTab('insights-tab');
+    }
+
+    function handleDraftInput() {
+      const text = document.getElementById('draftText').value;
+      document.getElementById('charCounter').innerText = `${text.length} chars`;
+
+      const redactEnabled = document.getElementById('redactToggle').checked;
+      const previewBox = document.getElementById('redactPreviewBox');
+      
+      if (!text.trim()) {
+        document.getElementById('redactPreviewContent').innerText = 'No text entered...';
+        document.getElementById('redactStatusBadge').innerText = 'Clean';
+        return;
+      }
+
+      if (redactEnabled) {
+        previewBox.classList.remove('hidden');
+        let sanitized = text
+          .replace(/([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})/g, '[REDACTED_EMAIL]')
+          .replace(/(\+?[0-9]{1,3}[-.\s]?)?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}/g, '[REDACTED_PHONE]');
+        
+        document.getElementById('redactPreviewContent').innerText = sanitized;
+        document.getElementById('redactStatusBadge').innerText = sanitized !== text ? 'Masked PII' : 'No PII Found';
+      } else {
+        previewBox.classList.add('hidden');
+      }
+    }
+
+    function toggleRedaction() {
+      handleDraftInput();
+    }
+
+    function loadSampleDraft() {
+      const sample = "Our revolutionary weight-loss pill guarantees 100% fat elimination in 7 days or your money back! Contact Dr. Smith at smith.clinical@gmail.com or call 555-0199 for our #1 best formula ever.";
+      document.getElementById('draftText').value = sample;
+      handleDraftInput();
+      
+      document.getElementById('imagePreviewContainer').classList.remove('hidden');
+      document.getElementById('uploadedImgThumb').src = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=150&auto=format&fit=crop&q=80";
+      document.getElementById('imageFileName').innerText = "campaign_banner_v2.jpg";
+      document.getElementById('imageFileSize').innerText = "2.4 MB • 1920x1080px";
+      document.getElementById('contrastValue').innerText = "3.2:1 (Fail)";
+      document.getElementById('contrastValue').className = "text-red-400 font-mono";
+      document.getElementById('paletteMatchValue').innerText = "72% Match";
+      document.getElementById('altTextValue').innerText = "Missing";
+    }
+
+    function clearCreatorForm() {
+      document.getElementById('draftText').value = '';
+      removeImage();
+      handleDraftInput();
+      document.getElementById('findingsPlaceholder').classList.remove('hidden');
+      document.getElementById('findingsLoading').classList.add('hidden');
+      document.getElementById('findingsContainer').classList.add('hidden');
+      document.getElementById('findingSummaryBadge').classList.add('hidden');
+      document.getElementById('creatorSubmitBar').classList.add('hidden');
+    }
+
+    function triggerFileInput() {
+      document.getElementById('imageInput').click();
+    }
+    function handleDragOver(e) { e.preventDefault(); e.currentTarget.classList.add('border-cyan-500', 'bg-slate-900/65'); }
+    function handleDragLeave(e) { e.preventDefault(); e.currentTarget.classList.remove('border-cyan-500', 'bg-slate-900/65'); }
+    function handleDrop(e) {
+      e.preventDefault();
+      e.currentTarget.classList.remove('border-cyan-500', 'bg-slate-900/65');
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        processImageFile(e.dataTransfer.files[0]);
+      }
+    }
+    function handleImageFileSelect(e) {
+      if (e.target.files && e.target.files[0]) {
+        processImageFile(e.target.files[0]);
+      }
+    }
+    function processImageFile(file) {
+      uploadedImageFile = file;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('uploadedImgThumb').src = e.target.result;
+        document.getElementById('imageFileName').innerText = file.name;
+        document.getElementById('imageFileSize').innerText = `${(file.size / (1024*1024)).toFixed(2)} MB`;
+        document.getElementById('imagePreviewContainer').classList.remove('hidden');
+      }
+      reader.readAsDataURL(file);
+    }
+    function removeImage(e) {
+      if (e) e.stopPropagation();
+      uploadedImageFile = null;
+      document.getElementById('imageInput').value = '';
+      document.getElementById('imagePreviewContainer').classList.add('hidden');
+    }
+
+    function runHybridReview() {
+      const text = document.getElementById('draftText').value.trim();
+      if (!text) {
+        alert('Please enter some draft copy before running verification.');
+        return;
+      }
+
+      document.getElementById('findingsPlaceholder').classList.add('hidden');
+      document.getElementById('findingsContainer').classList.add('hidden');
+      document.getElementById('findingSummaryBadge').classList.add('hidden');
+      document.getElementById('findingsLoading').classList.remove('hidden');
+
+      setTimeout(() => {
+        document.getElementById('findingsLoading').classList.add('hidden');
+        currentFindings = [];
+        
+        const lowerText = text.toLowerCase();
+        
+        // Dynamically evaluate against rulesList
+        rulesList.forEach((rule, idx) => {
+          if (rule.id === 1 && (lowerText.includes('guarantee') || lowerText.includes('100%') || lowerText.includes('cure'))) {
+            currentFindings.push({
+              id: 1,
+              type: 'Regulatory & ASCI Violation',
+              severity: 'Critical',
+              title: `Prohibited Term Match ("${rule.term.split('/')[0].trim()}")`,
+              explanation: `Rule match against Terminology Engine: Absolute claims require registered clinical substantiation vault reference.`,
+              suggestion: `Replace with compliant phrasing: "${rule.replacement}"`,
+              resolved: false,
+              fixedText: 'Our new formula is clinically studied to support healthy weight management goals over 8 weeks.'
+            });
+          }
+          if (rule.id === 2 && (lowerText.includes('free') || lowerText.includes('zero risk'))) {
+            currentFindings.push({
+              id: 2,
+              type: 'Terms & Conditions Guardrail',
+              severity: 'High',
+              title: `Prohibited Term Match ("${rule.term.split('/')[0].trim()}")`,
+              explanation: `Rule match against Terminology Engine: Free/Zero Risk claims require explicit terms disclosure.`,
+              suggestion: `Replace with: "${rule.replacement}"`,
+              resolved: false,
+              fixedText: 'Transparent Terms Apply to all introductory offers.'
+            });
+          }
+          if (rule.id === 3 && (lowerText.includes('#1') || lowerText.includes('best') || lowerText.includes('no.1'))) {
+            currentFindings.push({
+              id: 3,
+              type: 'Superlative Claim Check',
+              severity: 'Critical',
+              title: `Prohibited Term Match ("${rule.term.split('/')[0].trim()}")`,
+              explanation: `AI Vector match against Terminology Engine: Superlative market claims require audited proof documents.`,
+              suggestion: `Replace with: "${rule.replacement}"`,
+              resolved: false,
+              fixedText: 'Leading Market Provider backed by audited third-party reports.'
+            });
+          }
+        });
+
+        if (text.toLowerCase().includes('@') || text.toLowerCase().includes('555-')) {
+          currentFindings.push({
+            id: 4,
+            type: 'Privacy & PII Leak',
+            severity: 'High',
+            title: 'Unmasked Email or Direct Phone Number Detected',
+            explanation: 'GDPR/CCPA Governance Guardrail: Direct personal contact handles should route through brand redirection links.',
+            suggestion: 'Substitute with official support landing page URL.',
+            resolved: false,
+            fixedText: 'Contact verified support channels at brandx.com/support.'
+          });
+        }
+
+        if (uploadedImageFile || document.getElementById('contrastValue').innerText.includes('Fail')) {
+          currentFindings.push({
+            id: 5,
+            type: 'Visual Brand Compliance',
+            severity: 'Moderate',
+            title: 'Insufficient Color Contrast Ratio (3.2:1)',
+            explanation: 'WCAG 2.1 AA requirement: Overlay text contrast must exceed 4.5:1 against background palette.',
+            suggestion: 'Darken background gradient or lighten typography hex code.',
+            resolved: false,
+            fixedText: 'Applied Brand Dark Slate overlay (#0f172a) for 5.1:1 contrast pass.'
+          });
+        }
+
+        if (currentFindings.length === 0) {
+          currentFindings.push({
+            id: 99,
+            type: 'All Clear',
+            severity: 'Info',
+            title: 'Zero Governance Violations Detected',
+            explanation: 'Copy adheres to active terminology dictionary and verified claim vault.',
+            suggestion: 'Ready for manager sign-off.',
+            resolved: true,
+            fixedText: text
+          });
+        }
+
+        resolvedCount = currentFindings.filter(f => f.resolved).length;
+        renderFindings();
+        
+        document.getElementById('findingsContainer').classList.remove('hidden');
+        document.getElementById('findingSummaryBadge').classList.remove('hidden');
+        document.getElementById('findingCount').innerText = currentFindings.filter(f => !f.resolved).length;
+        document.getElementById('creatorSubmitBar').classList.remove('hidden');
+        updateResolvedStatusText();
+      }, 1000);
+    }
+
+    function renderFindings() {
+      const container = document.getElementById('findingsContainer');
+      container.innerHTML = '';
+
+      currentFindings.forEach(f => {
+        const card = document.createElement('div');
+        card.className = `p-4 rounded-xl border transition-all ${f.resolved ? 'bg-slate-950/40 border-emerald-500/30 opacity-75' : 'bg-slate-900/90 border-amber-500/40 shadow-lg'}`;
+        
+        const badgeColor = f.severity === 'Critical' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
+                           f.severity === 'High' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
+                           f.severity === 'Moderate' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-2">
+            <div class="flex items-center space-x-2">
+              <span class="text-[10px] px-2 py-0.5 rounded font-mono border ${badgeColor}">${f.severity}</span>
+              <span class="text-xs font-bold text-white">${f.title}</span>
+            </div>
+            <button onclick="toggleFixFinding(${f.id})" class="text-xs font-semibold px-2.5 py-1 rounded-lg border transition-all ${f.resolved ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' : 'bg-cyan-500 hover:bg-cyan-400 text-slate-950 border-cyan-400'}">
+              ${f.resolved ? '<i class="fa-solid fa-check mr-1"></i> Fixed' : 'Apply AI Fix'}
+            </button>
+          </div>
+          <p class="text-[11px] text-slate-300 mt-2 leading-relaxed">${f.explanation}</p>
+          <div class="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400 font-mono">
+            <span>Recommendation: <span class="text-cyan-300">${f.suggestion}</span></span>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function toggleFixFinding(id) {
+      const finding = currentFindings.find(f => f.id === id);
+      if (finding) {
+        finding.resolved = !finding.resolved;
+        resolvedCount = currentFindings.filter(f => f.resolved).length;
+        renderFindings();
+        
+        document.getElementById('findingCount').innerText = currentFindings.filter(f => !f.resolved).length;
+        updateResolvedStatusText();
+
+        if (currentFindings.every(f => f.resolved)) {
+          const combinedFixed = currentFindings.map(f => f.fixedText).join(' ');
+          document.getElementById('draftText').value = combinedFixed;
+          handleDraftInput();
+        }
+      }
+    }
+
+    function updateResolvedStatusText() {
+      const total = currentFindings.length;
+      document.getElementById('resolvedStatusText').innerText = `${resolvedCount} of ${total} issues addressed`;
+    }
+
+    function submitDraftToManager() {
+      const draft = document.getElementById('draftText').value;
+      const newSub = {
+        id: `SUB-${Math.floor(1000 + Math.random() * 9000)}`,
+        creator: 'Current Creator User',
+        title: 'Campaign Asset Review v1.1',
+        originalText: 'Proposed marketing copy awaiting final manager sign-off and compliance verification.',
+        proposedText: draft,
+        rulesCleared: `${resolvedCount}/${currentFindings.length}`,
+        piiScrubbed: true,
+        claimDoc: 'DOC-2026-ASCI-Clinical.pdf',
+        riskIndex: '0.02 (Minimal)',
+        status: 'Pending Review',
+        timestamp: 'Just now'
+      };
+
+      submissionsQueue.unshift(newSub);
+      renderReviewQueue();
+      alert('Version successfully submitted to Manager Approval Inbox!');
+      setActiveTab('manager-tab');
+    }
+
+    function renderReviewQueue() {
+      const list = document.getElementById('reviewQueueList');
+      list.innerHTML = '';
+      
+      document.getElementById('inboxBadge').innerText = `${submissionsQueue.length} Pending`;
+      document.getElementById('queueCountBadge').innerText = `${submissionsQueue.length} Items`;
+
+      submissionsQueue.forEach((sub, idx) => {
+        const item = document.createElement('div');
+        item.className = `p-3 rounded-xl border cursor-pointer transition-all ${idx === 0 ? 'bg-slate-900 border-cyan-500/60 shadow-md' : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'}`;
+        item.onclick = () => selectSubmission(sub.id);
+        
+        item.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] text-cyan-400 font-mono font-bold">${sub.id}</span>
+            <span class="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded">${sub.status}</span>
+          </div>
+          <h4 class="text-xs font-bold text-white mt-1">${sub.title}</h4>
+          <p class="text-[10px] text-slate-400 truncate mt-0.5">${sub.creator} • ${sub.timestamp}</p>
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    function selectSubmission(id) {
+      const sub = submissionsQueue.find(s => s.id === id);
+      if (!sub) return;
+
+      document.getElementById('diffTitle').innerText = `${sub.title} (${sub.id})`;
+      document.getElementById('diffSubtitle').innerText = `Submitted by ${sub.creator} • ${sub.timestamp}`;
+      document.getElementById('diffOriginalText').innerText = sub.originalText;
+      document.getElementById('diffProposedText').innerText = sub.proposedText;
+    }
+
+    function approveContent() {
+      alert('Version approved, cryptographically hashed, and locked to the immutable Brand Vault!');
+      if (submissionsQueue.length > 0) {
+        submissionsQueue.shift();
+        renderReviewQueue();
+        if (submissionsQueue.length > 0) selectSubmission(submissionsQueue[0].id);
+        else {
+          document.getElementById('diffTitle').innerText = 'Queue Empty';
+          document.getElementById('diffSubtitle').innerText = 'All submissions have been approved.';
+          document.getElementById('diffOriginalText').innerText = 'No active items...';
+          document.getElementById('diffProposedText').innerText = 'No active items...';
+        }
+      }
+    }
+
+    function showFeedbackModal() { document.getElementById('feedbackModal').classList.remove('hidden'); }
+    function closeFeedbackModal() { document.getElementById('feedbackModal').classList.add('hidden'); }
+    function sendFeedbackToCreator() {
+      const notes = document.getElementById('feedbackNotesInput').value;
+      if (!notes.trim()) { alert('Please enter feedback notes.'); return; }
+      alert('Revision notes sent back to Creator workspace.');
+      closeFeedbackModal();
+      document.getElementById('feedbackNotesInput').value = '';
+    }
+
+    function renderRulesList() {
+      const container = document.getElementById('rulesListContainer');
+      container.innerHTML = '';
+      rulesList.forEach((r, idx) => {
+        const div = document.createElement('div');
+        div.className = 'p-3 bg-slate-950/80 border border-slate-800 rounded-xl flex items-center justify-between text-xs';
+        div.innerHTML = `
+          <div>
+            <span class="text-red-400 font-semibold block">Prohibited: "${r.term}"</span>
+            <span class="text-slate-400 text-[10px]">Required Replacement: <strong class="text-emerald-400">${r.replacement}</strong></span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="text-[10px] px-2 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800 font-mono">${r.status}</span>
+            <button onclick="removeRule(${idx})" class="text-slate-500 hover:text-red-400 p-1"><i class="fa-solid fa-trash-can text-xs"></i></button>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function promptAddRule() {
+      const term = prompt('Enter prohibited term or pattern (e.g. "Exclusive / Limited"):');
+      if (!term) return;
+      const replacement = prompt('Enter required compliant replacement:');
+      if (!replacement) return;
+      rulesList.push({ id: Date.now(), term, replacement, status: 'Active (Custom Rule)' });
+      renderRulesList();
+    }
+
+    function removeRule(idx) {
+      rulesList.splice(idx, 1);
+      renderRulesList();
+    }
+
+    function renderClaimVault() {
+      const tbody = document.getElementById('claimVaultTableBody');
+      tbody.innerHTML = '';
+      claimVaultItems.forEach((c, idx) => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-900/50 transition-colors border-b border-slate-800/40';
+        tr.innerHTML = `
+          <td class="p-2.5 font-semibold text-white">${c.claim}</td>
+          <td class="p-2.5 font-mono text-cyan-400"><i class="fa-solid fa-file-pdf mr-1"></i> ${c.doc}</td>
+          <td class="p-2.5 font-mono text-slate-400">${c.expiry}</td>
+          <td class="p-2.5 text-right">
+            <button onclick="removeClaimItem(${idx})" class="text-slate-500 hover:text-red-400 transition-colors"><i class="fa-solid fa-trash-can"></i></button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function openAddClaimModal() { document.getElementById('addClaimModal').classList.remove('hidden'); }
+    function closeAddClaimModal() { document.getElementById('addClaimModal').classList.add('hidden'); }
+    function saveNewClaim() {
+      const claim = document.getElementById('newClaimTitle').value;
+      const doc = document.getElementById('newClaimDoc').value;
+      const expiry = document.getElementById('newClaimExpiry').value;
+      if (!claim || !doc || !expiry) { alert('Please fill in all fields.'); return; }
+      claimVaultItems.push({ claim, doc, expiry });
+      renderClaimVault();
+      closeAddClaimModal();
+      document.getElementById('newClaimTitle').value = '';
+      document.getElementById('newClaimDoc').value = '';
+      document.getElementById('newClaimExpiry').value = '';
+    }
+
+    function removeClaimItem(idx) {
+      claimVaultItems.splice(idx, 1);
+      renderClaimVault();
+    }
+
+    function copyHex(hex) {
+      navigator.clipboard.writeText(hex);
+      alert(`Copied brand hex code ${hex} to clipboard!`);
+    }
+
+    function initCharts() {
+      const ctxTrend = document.getElementById('governanceTrendChart').getContext('2d');
+      new Chart(ctxTrend, {
+        type: 'line',
+        data: {
+          labels: ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+          datasets: [{
+            label: 'Assets Scanned',
+            data: [820, 950, 1100, 1250, 1380, 1482],
+            borderColor: '#06b6d4',
+            backgroundColor: 'rgba(6, 182, 212, 0.1)',
+            fill: true,
+            tension: 0.3
+          }, {
+            label: 'Violations Auto-Remediated',
+            data: [140, 165, 190, 210, 240, 275],
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16, 185, 129, 0.05)',
+            fill: true,
+            tension: 0.3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: '#94a3b8', font: { family: 'JetBrains Mono', size: 10 } } } },
+          scales: {
+            x: { grid: { color: 'rgba(30, 41, 59, 0.5)' }, ticks: { color: '#64748b' } },
+            y: { grid: { color: 'rgba(30, 41, 59, 0.5)' }, ticks: { color: '#64748b' } }
+          }
+        }
+      });
+
+      const ctxPie = document.getElementById('violationsPieChart').getContext('2d');
+      new Chart(ctxPie, {
+        type: 'doughnut',
+        data: {
+          labels: ['Unsubstantiated Claims', 'PII Exposure', 'Color Contrast Failure', 'Banned Terminology'],
+          datasets: [{
+            data: [42, 28, 18, 12],
+            backgroundColor: ['#06b6d4', '#f59e0b', '#ef4444', '#8b5cf6'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { family: 'JetBrains Mono', size: 10 }, boxWidth: 12 } } }
+        }
+      });
+    }
+  </script>
+</body>
+</html>

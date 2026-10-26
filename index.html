@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BrandGuard - Explainable Evidence-Checked Governance Platform</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Chart.js for Leadership Analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    
+    body { 
+      font-family: 'Plus Jakarta Sans', sans-serif; 
+    }
+    .font-mono { 
+      font-family: 'JetBrains Mono', monospace; 
+    }
+    .glass-card {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-modal {
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(16px);
+    }
+    
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #090d16; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #334155; }
+
+    /* Toast animation */
+    @keyframes slideInRight {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    .toast-slide {
+      animation: slideInRight 0.3s ease-out forwards;
+    }
+  </style>
+</head>
+<body class="h-full flex flex-col bg-slate-950 text-slate-100 overflow-x-hidden selection:bg-cyan-500 selection:text-slate-950">
+
+  <!-- ==================== TOAST NOTIFICATION CONTAINER ==================== -->
+  <div id="toastContainer" class="fixed top-20 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+  <!-- ==================== TOP NAVIGATION HEADER ==================== -->
+  <header class="h-16 border-b border-slate-800 bg-slate-900/90 px-4 md:px-6 flex items-center justify-between z-30 shrink-0 sticky top-0 backdrop-blur-md">
+    <div class="flex items-center space-x-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+        <i class="fa-solid fa-shield-halved text-white text-xl"></i>
+      </div>
+      <div>
+        <div class="flex items-center space-x-2">
+          <span class="font-bold text-lg tracking-wider text-white">BRAND<span class="text-cyan-400">GUARD</span></span>
+          <span class="text-[10px] px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-400 border border-cyan-800 font-mono font-semibold">EVIDENCE-AI / v2.0</span>
+        </div>
+        <p class="text-[11px] text-slate-400 hidden sm:block">Explainable Evidence-Checked Brand Governance Platform</p>
+      </div>
+    </div>
+
+    <div class="flex items-center space-x-3 md:space-x-4">
+      <div class="hidden md:flex items-center space-x-2 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700/50 text-xs">
+        <span class="relative flex h-2.5 w-2.5">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+        </span>
+        <span class="text-slate-300">Hybrid Rules Engine: <strong class="text-emerald-400 font-medium" id="engineRuleCount">Active (3 Rules)</strong></span>
+      </div>
+
+      <!-- Global Role Selector -->
+      <div class="flex items-center space-x-2 bg-slate-800 border border-slate-700 rounded-lg p-1">
+        <span class="text-xs text-slate-400 pl-2 font-medium hidden sm:inline"><i class="fa-solid fa-user-gear mr-1 text-cyan-400"></i> Role:</span>
+        <select id="roleSelector" onchange="handleRoleSwitch(this.value)" class="bg-slate-900 text-cyan-400 font-semibold text-xs rounded-md px-2.5 py-1 focus:outline-none focus:ring-1 focus:ring-cyan-500 cursor-pointer border border-slate-700">
+          <option value="creator">Creator (Draft & Fix)</option>
+          <option value="manager">Manager / Reviewer</option>
+          <option value="admin">Brand Admin & Rules</option>
+          <option value="leadership">Leadership & Insights</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== NAVIGATION TABS ==================== -->
+  <nav class="bg-slate-900/80 border-b border-slate-800 px-4 md:px-6 flex space-x-1 shrink-0 overflow-x-auto scrollbar-none">
+    <button onclick="setActiveTab('creator-tab')" id="tab-btn-creator-tab" class="tab-btn px-4 py-3 text-xs font-semibold border-b-2 border-cyan-400 text-cyan-400 flex items-center space-x-2 transition-all whitespace-nowrap">
+      <i class="fa-solid fa-pen-to-square"></i>
+      <span>Content & Asset Review</span>
+    </button>
+    <button onclick="setActiveTab('manager-tab')" id="tab-btn-manager-tab" class="tab-btn px-4 py-3 text-xs font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center space-x-2 transition-all whitespace-nowrap">
+      <i class="fa-solid fa-clipboard-check"></i>
+      <span>Approval Inbox</span>
+      <span id="inboxBadge" class="bg-amber-500/20 text-amber-400 text-[10px] px-2 py-0.5 rounded-full border border-amber-500/30 font-mono">1 Pending</span>
+    </button>
+    <button onclick="setActiveTab('admin-tab')" id="tab-btn-admin-tab" class="tab-btn px-4 py-3 text-xs font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center space-x-2 transition-all whitespace-nowrap">
+      <i class="fa-solid fa-sliders"></i>
+      <span>Brand Library & Rules Engine</span>
+    </button>
+    <button onclick="setActiveTab('insights-tab')" id="tab-btn-insights-tab" class="tab-btn px-4 py-3 text-xs font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center space-x-2 transition-all whitespace-nowrap">
+      <i class="fa-solid fa-chart-line"></i>
+      <span>Leadership & Insights</span>
+    </button>
+  </nav>
+
+  <!-- ==================== MAIN BODY CONTENT ==================== -->
+  <main class="flex-1 overflow-y-auto p-4 md:p-6 bg-slate-950">
+
+    <!-- ==================== TAB 1: CREATOR WORKSPACE ==================== -->
+    <section id="creator-tab" class="tab-content space-y-6 max-w-7xl mx-auto">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left Column: Input Panel & Visual Asset Upload -->
+        <div class="lg:col-span-5 space-y-4">
+          <div class="glass-card p-5 rounded-2xl space-y-4 border border-slate-800 shadow-xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h2 class="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-2">
+                <i class="fa-solid fa-file-pen text-cyan-400"></i> Draft Copy & Visual Assets
+              </h2>
+              <div class="space-x-2">
+                <button onclick="loadSampleDraft()" class="text-xs bg-cyan-950 text-cyan-400 border border-cyan-800 hover:bg-cyan-900 px-2.5 py-1 rounded-lg font-medium transition-all">
+                  <i class="fa-solid fa-vial mr-1"></i> Load Non-Compliant Sample
+                </button>
+                <button onclick="clearCreatorForm()" class="text-xs text-slate-400 hover:text-slate-200 px-2 py-1">
+                  Clear
+                </button>
+              </div>
+            </div>
+
+            <!-- Draft Copy Input -->
+            <div>
+              <div class="flex justify-between items-center mb-1.5">
+                <label class="block text-xs font-semibold text-slate-300">Social Post / Ad Copy Draft</label>
+                <span id="charCounter" class="text-[10px] text-slate-500 font-mono">0 chars</span>
+              </div>
+              <textarea id="draftText" rows="5" oninput="handleDraftInput()" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 leading-relaxed font-sans transition-all resize-none" placeholder="Enter post caption, promotion text, or advertisement copy..."></textarea>
+            </div>
+
+            <!-- Privacy Redaction Layer Box -->
+            <div class="bg-slate-900/90 p-3.5 rounded-xl border border-slate-800/80 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
+                  <i class="fa-solid fa-user-shield text-emerald-400"></i> Privacy Auto-Redaction Layer
+                </span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" id="redactToggle" onchange="toggleRedaction()" checked class="sr-only peer">
+                  <div class="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                </label>
+              </div>
+              <div id="redactPreviewBox" class="bg-slate-950 p-2.5 rounded-lg border border-slate-800/60 font-mono text-[11px] text-slate-400 space-y-1">
+                <div class="flex justify-between text-[10px] text-slate-500 border-b border-slate-800/80 pb-1">
+                  <span>LIVE SANITIZED OUTPUT</span>
+                  <span id="redactStatusBadge" class="text-emerald-400 font-bold">Clean</span>
+                </div>
+                <div id="redactPreviewContent" class="break-all pt-1 text-slate-300">No draft text entered...</div>
+              </div>
+            </div>
+
+            <!-- Drag & Drop Visual Asset Upload -->
+            <div id="dropZone" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)" onclick="triggerFileInput()" class="border-2 border-dashed border-slate-800 hover:border-cyan-500/50 rounded-xl p-4 text-center cursor-pointer bg-slate-950/50 hover:bg-slate-900/60 transition-all relative">
+              <input type="file" id="imageInput" accept="image/*" onchange="handleImageFileSelect(event)" class="hidden">
+              <i class="fa-solid fa-cloud-arrow-up text-cyan-400 text-2xl mb-1.5 block"></i>
+              <p class="text-xs text-slate-200 font-medium" id="imageUploadLabel">Drag & drop asset image or click to browse</p>
+              <p class="text-[10px] text-slate-500 mt-0.5">Supports PNG, JPG, WebP (Max 10MB)</p>
+            </div>
+
+            <!-- Image File Preview Card -->
+            <div id="imagePreviewContainer" class="hidden relative rounded-xl overflow-hidden border border-slate-800 bg-slate-900 p-2.5 flex items-center space-x-3">
+              <img id="uploadedImgThumb" src="" class="w-12 h-12 object-cover rounded-lg border border-slate-800">
+              <div class="flex-1 overflow-hidden">
+                <p id="imageFileName" class="text-xs text-slate-200 font-bold truncate"></p>
+                <p id="imageFileSize" class="text-[10px] text-slate-400 font-mono"></p>
+              </div>
+              <button onclick="removeImage(event)" class="text-slate-400 hover:text-red-400 p-2 text-xs transition-colors"><i class="fa-solid fa-trash-can"></i></button>
+            </div>
+
+            <!-- Visual Compliance Panel -->
+            <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800/80 space-y-2">
+              <span class="text-[11px] font-bold text-slate-300 uppercase tracking-wider block border-b border-slate-800/80 pb-1">
+                Visual Guideline Checks
+              </span>
+              <div class="grid grid-cols-3 gap-2 text-center text-[10px]">
+                <div class="bg-slate-950 p-2 rounded-lg border border-slate-800/60">
+                  <span class="text-slate-400 block">Contrast Ratio</span>
+                  <strong id="contrastValue" class="text-emerald-400 font-mono">4.8:1 (Pass)</strong>
+                </div>
+                <div class="bg-slate-950 p-2 rounded-lg border border-slate-800/60">
+                  <span class="text-slate-400 block">Palette Match</span>
+                  <strong id="paletteMatchValue" class="text-cyan-400 font-mono">98% Match</strong>
+                </div>
+                <div class="bg-slate-950 p-2 rounded-lg border border-slate-800/60">
+                  <span class="text-slate-400 block">Alt Text Check</span>
+                  <strong id="altTextValue" class="text-emerald-400 font-mono">Verified</strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- Review Action Trigger -->
+            <button onclick="runHybridReview()" class="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-extrabold py-3.5 px-4 rounded-xl shadow-lg shadow-cyan-500/20 text-xs uppercase tracking-wider flex items-center justify-center space-x-2 transition-all cursor-pointer">
+              <i class="fa-solid fa-wand-magic-sparkles text-sm"></i>
+              <span>Run Hybrid AI & Rule Verification</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Right Column: Evidence & Findings Audit Panel -->
+        <div class="lg:col-span-7 space-y-4">
+          <div class="glass-card p-5 rounded-2xl border border-slate-800 h-full flex flex-col shadow-xl">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+              <h2 class="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-2">
+                <i class="fa-solid fa-magnifying-glass-chart text-cyan-400"></i> Evidence-Checked Findings & AI Fixes
+              </h2>
+              <div id="findingSummaryBadge" class="hidden text-xs bg-slate-900 text-slate-300 px-3 py-1 rounded-full border border-slate-800 font-mono">
+                <span id="findingCount" class="text-amber-400 font-bold">0</span> Issues Detected
+              </div>
+            </div>
+
+            <!-- Initial Placeholder state -->
+            <div id="findingsPlaceholder" class="flex-1 flex flex-col items-center justify-center py-20 text-center space-y-3">
+              <div class="w-16 h-16 rounded-2xl bg-slate-900/90 flex items-center justify-center border border-slate-800 text-slate-600 shadow-inner">
+                <i class="fa-solid fa-shield-cat text-3xl text-slate-500"></i>
+              </div>
+              <div>
+                <p class="text-xs font-semibold text-slate-300">No Verification Analysis Executed</p>
+                <p class="text-[11px] text-slate-500 mt-1 max-w-xs">Click "Run Hybrid AI & Rule Verification" to evaluate your copy against the active dynamic Rules Engine.</p>
+              </div>
+            </div>
+
+            <!-- Loading Spinner State -->
+            <div id="findingsLoading" class="hidden flex-1 flex flex-col items-center justify-center py-20 text-center space-y-3">
+              <div class="relative flex items-center justify-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-2 border-cyan-400 border-t-transparent"></div>
+                <i class="fa-solid fa-microchip text-xs text-cyan-400 absolute"></i>
+              </div>
+              <p class="text-xs text-cyan-400 font-mono animate-pulse">Scanning Copy against Terminology Engine & Vault...</p>
+            </div>
+
+            <!-- Findings List Container -->
+            <div id="findingsContainer" class="hidden space-y-3 mt-4 overflow-y-auto max-h-[520px] pr-1"></div>
+
+            <!-- Action Bar Footer -->
+            <div id="creatorSubmitBar" class="hidden mt-4 pt-3 border-t border-slate-800 flex items-center justify-between">
+              <span class="text-xs text-slate-400 font-mono" id="resolvedStatusText">0 of 0 issues addressed</span>
+              <button onclick="submitDraftToManager()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-emerald-500/20 transition-all cursor-pointer">
+                <i class="fa-solid fa-paper-plane"></i> Submit Version to Approval Inbox
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== TAB 2: MANAGER APPROVAL INBOX ==================== -->
+    <section id="manager-tab" class="tab-content hidden space-y-6 max-w-7xl mx-auto">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Queue List -->
+        <div class="lg:col-span-4 glass-card p-4 rounded-2xl border border-slate-800 space-y-3 shadow-xl">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-2">
+              <i class="fa-solid fa-inbox text-cyan-400"></i> Submissions Queue
+            </h2>
+            <span id="queueCountBadge" class="text-[10px] bg-slate-800 text-slate-300 font-mono px-2 py-0.5 rounded-full border border-slate-700">1 Items</span>
+          </div>
+          <div id="reviewQueueList" class="space-y-2 max-h-[600px] overflow-y-auto pr-1">
+            <!-- Dynamic Inbox Items -->
+          </div>
+        </div>
+
+        <!-- Diff Inspector Panel -->
+        <div class="lg:col-span-8 glass-card p-5 rounded-2xl border border-slate-800 space-y-4 shadow-xl">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+            <div>
+              <h2 class="text-xs font-bold text-white uppercase tracking-wider" id="diffTitle">Side-by-Side Version Inspector</h2>
+              <p class="text-[11px] text-slate-400" id="diffSubtitle">Select a submission from the left queue to review changes.</p>
+            </div>
+            <span class="text-[10px] bg-cyan-950 text-cyan-300 border border-cyan-800 font-mono px-2.5 py-1 rounded-full font-semibold">
+              Audit-Ready Diff
+            </span>
+          </div>
+
+          <!-- Comparison View -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-1.5">
+              <span class="text-[10px] font-mono text-red-400 uppercase tracking-wider block font-semibold"><i class="fa-solid fa-minus-circle mr-1"></i> Original Draft Input</span>
+              <div class="bg-slate-950 p-3.5 rounded-xl border border-red-900/40 text-xs text-slate-300 font-mono leading-relaxed min-h-[140px] break-words" id="diffOriginalText">
+                No item selected.
+              </div>
+            </div>
+
+            <div class="space-y-1.5">
+              <span class="text-[10px] font-mono text-emerald-400 uppercase tracking-wider block font-semibold"><i class="fa-solid fa-plus-circle mr-1"></i> Proposed Clean Version</span>
+              <div class="bg-slate-950 p-3.5 rounded-xl border border-emerald-900/40 text-xs text-slate-200 font-mono leading-relaxed min-h-[140px] break-words" id="diffProposedText">
+                No item selected.
+              </div>
+            </div>
+          </div>
+
+          <!-- Audit Clearance Summary -->
+          <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-800 space-y-2">
+            <h3 class="text-xs font-bold text-slate-200 uppercase tracking-wider">Automated Clearance Trail</h3>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-[10px] font-mono">
+              <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
+                <span class="text-slate-500 block">Rules Cleared</span>
+                <span class="text-emerald-400 font-bold text-xs" id="diffRulesCleared">2/2 Rules</span>
+              </div>
+              <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
+                <span class="text-slate-500 block">PII Scrubbed</span>
+                <span class="text-emerald-400 font-bold text-xs" id="diffPiiStatus">Masked</span>
+              </div>
+              <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
+                <span class="text-slate-500 block">Claim Proof</span>
+                <span class="text-cyan-400 font-bold text-xs truncate block" id="diffClaimDoc">DOC-2026-ASCI</span>
+              </div>
+              <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
+                <span class="text-slate-500 block">Risk Index</span>
+                <span class="text-emerald-400 font-bold text-xs" id="diffRiskIndex">0.02 (Low)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Manager Action Buttons -->
+          <div class="flex justify-end space-x-3 pt-2">
+            <button onclick="showFeedbackModal()" class="px-4 py-2.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer">
+              <i class="fa-solid fa-comment-dots"></i> Request Changes
+            </button>
+            <button onclick="approveContent()" class="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-emerald-500/20 flex items-center gap-1.5 transition-all cursor-pointer">
+              <i class="fa-solid fa-lock"></i> Approve & Lock Version
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== TAB 3: BRAND LIBRARY & DYNAMIC RULES ENGINE ==================== -->
+    <section id="admin-tab" class="tab-content hidden space-y-6 max-w-7xl mx-auto">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Fully Dynamic Terminology Rules Engine -->
+        <div class="lg:col-span-6 glass-card p-5 rounded-2xl border border-slate-800 space-y-4 shadow-xl">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+            <div>
+              <h2 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                <i class="fa-solid fa-sliders text-cyan-400"></i> Terminology Rules Engine
+              </h2>
+              <p class="text-[11px] text-slate-400">Active pattern matches and required substitutions</p>
+            </div>
+            <button onclick="openAddRuleModal()" class="px-3 py-1.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-lg text-xs shadow-md transition-all cursor-pointer flex items-center gap-1">
+              <i class="fa-solid fa-plus text-[10px]"></i> Add Rule
+            </button>
+          </div>
+
+          <!-- Rules List Container -->
+          <div id="rulesListContainer" class="space-y-3 max-h-[420px] overflow-y-auto pr-1">
+            <!-- Dynamic Rule Cards loaded via JavaScript -->
+          </div>
+        </div>
+
+        <!-- Verified Brand Palette & Claim Vault -->
+        <div class="lg:col-span-6 space-y-6">
+          
+          <!-- Palette Panel -->
+          <div class="glass-card p-5 rounded-2xl border border-slate-800 space-y-3 shadow-xl">
+            <h2 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+              <i class="fa-solid fa-palette text-cyan-400"></i> Verified Brand Color Palette
+            </h2>
+            <div class="grid grid-cols-4 gap-2.5">
+              <div onclick="copyHex('#0ea5e9')" class="p-2.5 rounded-xl bg-sky-500/10 border border-sky-500/30 text-center cursor-pointer hover:scale-105 transition-all">
+                <div class="w-full h-7 rounded-lg bg-[#0ea5e9] mb-1.5 shadow-md"></div>
+                <span class="text-[10px] font-mono text-slate-200 block font-semibold">Cyan Blue</span>
+                <span class="text-[9px] font-mono text-sky-400">#0ea5e9</span>
+              </div>
+              <div onclick="copyHex('#0284c7')" class="p-2.5 rounded-xl bg-sky-700/10 border border-sky-600/30 text-center cursor-pointer hover:scale-105 transition-all">
+                <div class="w-full h-7 rounded-lg bg-[#0284c7] mb-1.5 shadow-md"></div>
+                <span class="text-[10px] font-mono text-slate-200 block font-semibold">Deep Cyan</span>
+                <span class="text-[9px] font-mono text-sky-400">#0284c7</span>
+              </div>
+              <div onclick="copyHex('#10b981')" class="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-center cursor-pointer hover:scale-105 transition-all">
+                <div class="w-full h-7 rounded-lg bg-[#10b981] mb-1.5 shadow-md"></div>
+                <span class="text-[10px] font-mono text-slate-200 block font-semibold">Pass Emerald</span>
+                <span class="text-[9px] font-mono text-emerald-400">#10b981</span>
+              </div>
+              <div onclick="copyHex('#0f172a')" class="p-2.5 rounded-xl bg-slate-800/40 border border-slate-700 text-center cursor-pointer hover:scale-105 transition-all">
+                <div class="w-full h-7 rounded-lg bg-[#0f172a] mb-1.5 border border-slate-700 shadow-md"></div>
+                <span class="text-[10px] font-mono text-slate-200 block font-semibold">Dark Slate</span>
+                <span class="text-[9px] font-mono text-slate-400">#0f172a</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Claim Substantiation Vault Table -->
+          <div class="glass-card p-5 rounded-2xl border border-slate-800 space-y-3 shadow-xl">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+              <h2 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                <i class="fa-solid fa-vault text-cyan-400"></i> Legal Claim Substantiation Vault
+              </h2>
+              <button onclick="openAddClaimModal()" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-cyan-400 rounded-lg text-xs font-semibold border border-slate-700 cursor-pointer transition-colors">
+                + Add Evidence
+              </button>
+            </div>
+
+            <div class="overflow-x-auto max-h-[200px] overflow-y-auto">
+              <table class="w-full text-left text-xs text-slate-300">
+                <thead class="bg-slate-950 text-slate-400 text-[10px] uppercase font-mono border-b border-slate-800 sticky top-0">
+                  <tr>
+                    <th class="p-2.5">Claim Statement</th>
+                    <th class="p-2.5">Proof Document</th>
+                    <th class="p-2.5">Expiry Date</th>
+                    <th class="p-2.5 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="claimVaultTableBody" class="divide-y divide-slate-800/60 font-sans">
+                  <!-- Dynamic Rows -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== TAB 4: LEADERSHIP & INSIGHTS TAB ==================== -->
+    <section id="insights-tab" class="tab-content hidden space-y-6 max-w-7xl mx-auto">
+      
+      <!-- Top Info Banner -->
+      <div class="glass-card p-4 rounded-2xl border-l-4 border-l-cyan-400 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0">
+            <i class="fa-solid fa-chart-line text-lg"></i>
+          </div>
+          <div>
+            <h1 class="text-xs font-bold text-white uppercase tracking-wider">Executive Governance Intelligence & ROI</h1>
+            <p class="text-xs text-slate-300 mt-0.5">Track brand risk mitigation velocity, compliance pass rates, and regulatory penalty avoidance metrics.</p>
+          </div>
+        </div>
+        <button onclick="exportAuditReport()" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold px-4 py-2 rounded-xl text-xs shadow-lg transition-all cursor-pointer whitespace-nowrap">
+          <i class="fa-solid fa-download mr-1.5"></i> Export Audit Report (.json)
+        </button>
+      </div>
+
+      <!-- Metrics Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="glass-card p-4 rounded-2xl border border-slate-800 space-y-1 shadow-lg">
+          <span class="text-[10px] text-slate-400 font-mono uppercase tracking-wider">Total Verified Assets</span>
+          <div class="flex items-baseline justify-between">
+            <h3 class="text-2xl font-extrabold text-white font-mono">1,482</h3>
+            <span class="text-xs text-emerald-400 font-semibold font-mono"><i class="fa-solid fa-arrow-trend-up"></i> +12.4%</span>
+          </div>
+          <p class="text-[10px] text-slate-500">Across marketing channels this month</p>
+        </div>
+
+        <div class="glass-card p-4 rounded-2xl border border-slate-800 space-y-1 shadow-lg">
+          <span class="text-[10px] text-slate-400 font-mono uppercase tracking-wider">Compliance Pass Rate</span>
+          <div class="flex items-baseline justify-between">
+            <h3 class="text-2xl font-extrabold text-cyan-400 font-mono">94.8%</h3>
+            <span class="text-xs text-emerald-400 font-semibold font-mono"><i class="fa-solid fa-arrow-trend-up"></i> +3.1%</span>
+          </div>
+          <p class="text-[10px] text-slate-500">First-pass automated clearance</p>
+        </div>
+
+        <div class="glass-card p-4 rounded-2xl border border-slate-800 space-y-1 shadow-lg">
+          <span class="text-[10px] text-slate-400 font-mono uppercase tracking-wider">Potential Fines Avoided</span>
+          <div class="flex items-baseline justify-between">
+            <h3 class="text-2xl font-extrabold text-emerald-400 font-mono">$340K</h3>
+            <span class="text-xs text-emerald-400 font-semibold font-mono"><i class="fa-solid fa-shield"></i> Substantiated</span>
+          </div>
+          <p class="text-[10px] text-slate-500">ASCI & FTC misleading claim flags caught</p>
+        </div>
+
+        <div class="glass-card p-4 rounded-2xl border border-slate-800 space-y-1 shadow-lg">
+          <span class="text-[10px] text-slate-400 font-mono uppercase tracking-wider">Avg Approval Velocity</span>
+          <div class="flex items-baseline justify-between">
+            <h3 class="text-2xl font-extrabold text-indigo-400 font-mono">4.2 mins</h3>
+            <span class="text-xs text-emerald-400 font-semibold font-mono"><i class="fa-solid fa-bolt"></i> 8x Faster</span>
+          </div>
+          <p class="text-[10px] text-slate-500">From draft submission to lock</p>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-8 glass-card p-5 rounded-2xl border border-slate-800 space-y-3 shadow-xl">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+              <i class="fa-solid fa-chart-area text-cyan-400"></i> Monthly Governance Volume & Remediation Trend
+            </h2>
+            <span class="text-[10px] text-slate-400 font-mono">Live Telemetry</span>
+          </div>
+          <div class="h-64 relative">
+            <canvas id="governanceTrendChart"></canvas>
+          </div>
+        </div>
+
+        <div class="lg:col-span-4 glass-card p-5 rounded-2xl border border-slate-800 space-y-3 shadow-xl">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+              <i class="fa-solid fa-triangle-exclamation text-amber-400"></i> Top Flagged Violations
+            </h2>
+          </div>
+          <div class="h-64 relative flex items-center justify-center">
+            <canvas id="violationsPieChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== MODALS ==================== -->
+
+  <!-- Modal 1: Add Custom Rule Modal -->
+  <div id="addRuleModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
+    <div class="glass-modal w-full max-w-md p-6 rounded-2xl border border-slate-700 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h3 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+          <i class="fa-solid fa-sliders text-cyan-400"></i> Register New Governance Rule
+        </h3>
+        <button onclick="closeAddRuleModal()" class="text-slate-400 hover:text-slate-200"><i class="fa-solid fa-xmark text-base"></i></button>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="text-[11px] font-semibold text-slate-300 block mb-1">Prohibited Term or Phrase Pattern:</label>
+          <input type="text" id="newRuleTerm" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-100 focus:outline-none focus:border-cyan-500 font-mono" placeholder="e.g., Guaranteed ROI / 100% Free">
+        </div>
+        <div>
+          <label class="text-[11px] font-semibold text-slate-300 block mb-1">Required Compliant Replacement:</label>
+          <input type="text" id="newRuleReplacement" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-100 focus:outline-none focus:border-cyan-500 font-mono" placeholder="e.g., Projected Performance / Terms Apply">
+        </div>
+        <div>
+          <label class="text-[11px] font-semibold text-slate-300 block mb-1">Rule Engine Type:</label>
+          <select id="newRuleType" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-cyan-400 focus:outline-none focus:border-cyan-500 font-semibold">
+            <option value="Deterministic">Deterministic (Exact Match)</option>
+            <option value="AI Vector">AI Vector (Contextual / Fuzzy)</option>
+          </select>
+        </div>
+      </div>
+      <div class="flex justify-end space-x-2 pt-2">
+        <button onclick="closeAddRuleModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs font-semibold hover:bg-slate-700 transition-colors">Cancel</button>
+        <button onclick="saveNewRule()" class="px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold rounded-xl text-xs shadow-md transition-all">Save & Sync Rule</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 2: Revision Request Modal -->
+  <div id="feedbackModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
+    <div class="glass-modal w-full max-w-md p-6 rounded-2xl border border-slate-700 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h3 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+          <i class="fa-solid fa-comment-medical text-amber-400"></i> Request Revision from Creator
+        </h3>
+        <button onclick="closeFeedbackModal()" class="text-slate-400 hover:text-slate-200"><i class="fa-solid fa-xmark text-base"></i></button>
+      </div>
+      <div class="space-y-2">
+        <label class="text-xs text-slate-300 block">Feedback / Compliance Guidance Notes:</label>
+        <textarea id="feedbackNotesInput" rows="4" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-cyan-500 resize-none font-sans" placeholder="Explain why this version needs adjustment..."></textarea>
+      </div>
+      <div class="flex justify-end space-x-2 pt-2">
+        <button onclick="closeFeedbackModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs font-semibold">Cancel</button>
+        <button onclick="sendFeedbackToCreator()" class="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs shadow-md">Send Revision Request</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 3: Add Claim Evidence Modal -->
+  <div id="addClaimModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
+    <div class="glass-modal w-full max-w-md p-6 rounded-2xl border border-slate-700 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h3 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+          <i class="fa-solid fa-file-circle-plus text-cyan-400"></i> Register Legal Claim & Proof
+        </h3>
+        <button onclick="closeAddClaimModal()" class="text-slate-400 hover:text-slate-200"><i class="fa-solid fa-xmark text-base"></i></button>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="text-[11px] font-semibold text-slate-300 block mb-1">Claim Statement:</label>
+          <input type="text" id="newClaimTitle" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-100 focus:outline-none focus:border-cyan-500" placeholder="e.g., #1 Energy Drink in Nationwide Sales">
+        </div>
+        <div>
+          <label class="text-[11px] font-semibold text-slate-300 block mb-1">Proof Document Ref / URL:</label>
+          <input type="text" id="newClaimDoc" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-100 font-mono focus:outline-none focus:border-cyan-500" placeholder="DOC-2026-Nielsen-Audited.pdf">
+        </div>
+        <div>
+          <label class="text-[11px] font-semibold text-slate-300 block mb-1">Expiry Date:</label>
+          <input type="date" id="newClaimExpiry" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-100 font-mono focus:outline-none focus:border-cyan-500">
+        </div>
+      </div>
+      <div class="flex justify-end space-x-2 pt-2">
+        <button onclick="closeAddClaimModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs font-semibold">Cancel</button>
+        <button onclick="saveNewClaim()" class="px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-xl text-xs shadow-md">Register in Vault</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== JAVASCRIPT LOGIC ==================== -->
+  <script>
+    // Global Application State
+    let currentActiveTab = 'creator-tab';
+    let uploadedImageFile = null;
+    let currentFindings = [];
+    let resolvedCount = 0;
+    
+    // Persistent Rules Engine State
+    let rulesList = JSON.parse(localStorage.getItem('brandguard_rules')) || [
+      { id: 'R1', term: 'Guarantees / Cures / 100%', replacement: 'Supports / Clinically Studied', type: 'Deterministic', active: true },
+      { id: 'R2', term: 'Free / Zero Risk', replacement: 'Transparent Terms Apply', type: 'Deterministic', active: true },
+      { id: 'R3', term: '#1 Best in World / India\'s No.1', replacement: 'Leading Market Provider (Requires Doc)', type: 'AI Vector', active: true }
+    ];
+
+    // Persistent Manager Inbox Queue State
+    let submissionsQueue = JSON.parse(localStorage.getItem('brandguard_inbox')) || [
+      {
+        id: 'SUB-8902',
+        creator: 'Sarah Jenkins (Growth Mktg)',
+        title: 'Q3 Product Launch Ad Copy v1',
+        originalText: 'Our new formula guarantees 100% weight loss with zero risk! Contact support@brandx.com or call 555-0199 for instant access. We are India\'s No.1 platform.',
+        proposedText: 'Our new formula is clinically studied to support healthy weight management goals with transparent terms apply. Contact verified support channels for details. We are a leading market provider.',
+        rulesCleared: '3/3 Rules',
+        piiScrubbed: true,
+        claimDoc: 'DOC-2026-ASCI-Clinical.pdf',
+        riskIndex: '0.02 (Low)',
+        status: 'Pending Review',
+        timestamp: '12 mins ago'
+      }
+    ];
+
+    // Persistent Legal Claim Vault State
+    let claimVaultItems = JSON.parse(localStorage.getItem('brandguard_vault')) || [
+      { claim: '100% Organic Cotton Sourced', doc: 'DOC-2026-GOTS-Cert.pdf', expiry: '2027-12-31' },
+      { claim: 'Clinically Tested Energy Formulation', doc: 'DOC-2026-Clinical-Trial-B.pdf', expiry: '2026-11-15' },
+      { claim: 'Zero Sugar & Zero Artificial Preservatives', doc: 'DOC-2026-Lab-Analysis-Report.pdf', expiry: '2028-01-10' }
+    ];
+
+    // Toast Feedback Utility
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      
+      const bgClass = type === 'success' ? 'bg-emerald-950 border-emerald-500 text-emerald-200' :
+                      type === 'warning' ? 'bg-amber-950 border-amber-500 text-amber-200' :
+                      type === 'error' ? 'bg-red-950 border-red-500 text-red-200' :
+                      'bg-slate-900 border-cyan-500 text-cyan-200';
+      
+      const icon = type === 'success' ? 'fa-circle-check text-emerald-400' :
+                   type === 'warning' ? 'fa-triangle-exclamation text-amber-400' :
+                   type === 'error' ? 'fa-circle-xmark text-red-400' :
+                   'fa-circle-info text-cyan-400';
+
+      toast.className = `toast-slide p-3 rounded-xl border ${bgClass} shadow-xl flex items-center space-x-2 text-xs font-medium max-w-sm pointer-events-auto`;
+      toast.innerHTML = `<i class="fa-solid ${icon} text-base"></i><span>${message}</span>`;
+      
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    // App Initialization
+    window.addEventListener('DOMContentLoaded', () => {
+      renderRulesList();
+      renderReviewQueue();
+      renderClaimVault();
+      initCharts();
+      handleDraftInput();
+    });
+
+    // Local Storage Sync Helper
+    function saveState() {
+      localStorage.setItem('brandguard_rules', JSON.stringify(rulesList));
+      localStorage.setItem('brandguard_inbox', JSON.stringify(submissionsQueue));
+      localStorage.setItem('brandguard_vault', JSON.stringify(claimVaultItems));
+      updateEngineHeaderBadge();
+    }
+
+    function updateEngineHeaderBadge() {
+      const activeCount = rulesList.filter(r => r.active).length;
+      document.getElementById('engineRuleCount').innerText = `Active (${activeCount} Rules)`;
+    }
+
+    // Tab Navigation Switcher
+    function setActiveTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('border-cyan-400', 'text-cyan-400');
+        btn.classList.add('border-transparent', 'text-slate-400');
+      });
+
+      document.getElementById(tabId).classList.remove('hidden');
+      const activeBtn = document.getElementById(`tab-btn-${tabId}`);
+      if (activeBtn) {
+        activeBtn.classList.remove('border-transparent', 'text-slate-400');
+        activeBtn.classList.add('border-cyan-400', 'text-cyan-400');
+      }
+      currentActiveTab = tabId;
+
+      if (tabId === 'manager-tab' && submissionsQueue.length > 0) {
+        selectSubmission(submissionsQueue[0].id);
+      }
+    }
+
+    // Role Selector Switcher
+    function handleRoleSwitch(role) {
+      if (role === 'creator') setActiveTab('creator-tab');
+      else if (role === 'manager') setActiveTab('manager-tab');
+      else if (role === 'admin') setActiveTab('admin-tab');
+      else if (role === 'leadership') setActiveTab('insights-tab');
+    }
+
+    // Creator Tab: Draft Copy Input & Real-Time PII Auto-Redaction
+    function handleDraftInput() {
+      const text = document.getElementById('draftText').value;
+      document.getElementById('charCounter').innerText = `${text.length} chars`;
+
+      const redactEnabled = document.getElementById('redactToggle').checked;
+      const previewBox = document.getElementById('redactPreviewBox');
+      
+      if (!text.trim()) {
+        document.getElementById('redactPreviewContent').innerText = 'No draft text entered...';
+        document.getElementById('redactStatusBadge').innerText = 'Clean';
+        document.getElementById('redactStatusBadge').className = 'text-emerald-400 font-bold';
+        return;
+      }
+
+      if (redactEnabled) {
+        previewBox.classList.remove('hidden');
+        // PII Masking regex logic for emails, phone numbers, and sensitive API keys
+        let sanitized = text
+          .replace(/([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})/g, '[REDACTED_EMAIL]')
+          .replace(/(\+?[0-9]{1,3}[-.\s]?)?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}/g, '[REDACTED_PHONE]')
+          .replace(/(sk-[a-zA-Z0-9]{24,})/g, '[REDACTED_API_KEY]');
+        
+        document.getElementById('redactPreviewContent').innerText = sanitized;
+        if (sanitized !== text) {
+          document.getElementById('redactStatusBadge').innerText = 'PII Masked';
+          document.getElementById('redactStatusBadge').className = 'text-amber-400 font-bold';
+        } else {
+          document.getElementById('redactStatusBadge').innerText = 'Clean';
+          document.getElementById('redactStatusBadge').className = 'text-emerald-400 font-bold';
+        }
+      } else {
+        previewBox.classList.add('hidden');
+      }
+    }
+
+    function toggleRedaction() {
+      handleDraftInput();
+    }
+
+    // Load Non-Compliant Sample Draft
+    function loadSampleDraft() {
+      const sample = "Introducing our new product! We guarantees 100% weight loss with zero risk in 7 days or full refund. We are India's No.1 platform. Contact support@brandx.com or call 9876543210 for instant access.";
+      document.getElementById('draftText').value = sample;
+      handleDraftInput();
+      
+      // Simulate image asset attachment
+      document.getElementById('imagePreviewContainer').classList.remove('hidden');
+      document.getElementById('uploadedImgThumb').src = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=150&auto=format&fit=crop&q=80";
+      document.getElementById('imageFileName').innerText = "campaign_banner_v2.jpg";
+      document.getElementById('imageFileSize').innerText = "2.4 MB • 1920x1080px";
+      document.getElementById('contrastValue').innerText = "3.2:1 (Fail)";
+      document.getElementById('contrastValue').className = "text-red-400 font-mono font-bold";
+      document.getElementById('paletteMatchValue').innerText = "72% Match";
+      document.getElementById('altTextValue').innerText = "Missing";
+
+      showToast('Loaded non-compliant sample draft & asset', 'info');
+    }
+
+    function clearCreatorForm() {
+      document.getElementById('draftText').value = '';
+      removeImage();
+      handleDraftInput();
+      document.getElementById('findingsPlaceholder').classList.remove('hidden');
+      document.getElementById('findingsLoading').classList.add('hidden');
+      document.getElementById('findingsContainer').classList.add('hidden');
+      document.getElementById('findingSummaryBadge').classList.add('hidden');
+      document.getElementById('creatorSubmitBar').classList.add('hidden');
+    }
+
+    // Drag and Drop Image Uploader Handlers
+    function triggerFileInput() {
+      document.getElementById('imageInput').click();
+    }
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.currentTarget.classList.add('border-cyan-500', 'bg-slate-900/80');
+    }
+    function handleDragLeave(e) {
+      e.preventDefault();
+      e.currentTarget.classList.remove('border-cyan-500', 'bg-slate-900/80');
+    }
+    function handleDrop(e) {
+      e.preventDefault();
+      e.currentTarget.classList.remove('border-cyan-500', 'bg-slate-900/80');
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        processImageFile(e.dataTransfer.files[0]);
+      }
+    }
+    function handleImageFileSelect(e) {
+      if (e.target.files && e.target.files[0]) {
+        processImageFile(e.target.files[0]);
+      }
+    }
+    function processImageFile(file) {
+      uploadedImageFile = file;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('uploadedImgThumb').src = e.target.result;
+        document.getElementById('imageFileName').innerText = file.name;
+        document.getElementById('imageFileSize').innerText = `${(file.size / (1024*1024)).toFixed(2)} MB`;
+        document.getElementById('imagePreviewContainer').classList.remove('hidden');
+      }
+      reader.readAsDataURL(file);
+      showToast(`Attached visual asset: ${file.name}`, 'success');
+    }
+    function removeImage(e) {
+      if (e) e.stopPropagation();
+      uploadedImageFile = null;
+      document.getElementById('imageInput').value = '';
+      document.getElementById('imagePreviewContainer').classList.add('hidden');
+      document.getElementById('contrastValue').innerText = "4.8:1 (Pass)";
+      document.getElementById('contrastValue').className = "text-emerald-400 font-mono font-bold";
+    }
+
+    // Dynamic Hybrid AI Review Engine (Evaluates Active Rules Dynamically)
+    function runHybridReview() {
+      const text = document.getElementById('draftText').value.trim();
+      if (!text) {
+        showToast('Please enter draft copy before running verification.', 'warning');
+        return;
+      }
+
+      document.getElementById('findingsPlaceholder').classList.add('hidden');
+      document.getElementById('findingsContainer').classList.add('hidden');
+      document.getElementById('findingSummaryBadge').classList.add('hidden');
+      document.getElementById('findingsLoading').classList.remove('hidden');
+
+      // Async scan simulation
+      setTimeout(() => {
+        document.getElementById('findingsLoading').classList.add('hidden');
+        currentFindings = [];
+
+        // 1. DYNAMIC MATCHING AGAINST ACTIVE TERMINOLOGY RULES
+        const activeRules = rulesList.filter(r => r.active);
+        
+        activeRules.forEach((rule, idx) => {
+          // Tokenize or match terms from the rule term field
+          const termsToMatch = rule.term.split('/').map(t => t.trim().toLowerCase()).filter(t => t.length > 0);
+          
+          let matchedTerm = null;
+          for (let term of termsToMatch) {
+            // Remove special regex characters for smooth matching
+            const cleanTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(cleanTerm, 'i');
+            if (regex.test(text)) {
+              matchedTerm = term;
+              break;
+            }
+          }
+
+          if (matchedTerm) {
+            currentFindings.push({
+              id: `DYNAMIC-RULE-${rule.id}`,
+              type: `Rule Check (${rule.type})`,
+              severity: 'Critical',
+              quote: matchedTerm,
+              title: `Prohibited Term Violation: "${rule.term}"`,
+              explanation: `Active Rule Match: Contextual match against rule requirement. Term "${matchedTerm}" violates brand terminology dictionary.`,
+              suggestion: `Replace with approved term: "${rule.replacement}"`,
+              source: 'Brand Terms Dictionary',
+              resolved: false,
+              targetTerm: matchedTerm,
+              replacementTerm: rule.replacement
+            });
+          }
+        });
+
+        // 2. CHECK PRIVACY & PII EXPOSURE
+        if (text.toLowerCase().includes('@') || text.toLowerCase().includes('9876543210') || text.toLowerCase().includes('555-')) {
+          currentFindings.push({
+            id: 'RULE-PII-01',
+            type: 'Privacy & PII Exposure',
+            severity: 'High',
+            quote: text.includes("support@brandx.com") ? "support@brandx.com / phone" : "contact handle",
+            title: 'Unmasked Email or Direct Phone Number Detected',
+            explanation: 'GDPR/CCPA Compliance: Direct personal or unverified emails should route through brand redirection landing pages.',
+            suggestion: 'Substitute with official support landing page link.',
+            source: 'Privacy Policy Sec 4',
+            resolved: false,
+            targetTerm: 'support@brandx.com',
+            replacementTerm: 'brand.com/support'
+          });
+        }
+
+        // 3. CHECK VISUAL ASSET COMPLIANCE
+        if (uploadedImageFile || document.getElementById('contrastValue').innerText.includes('Fail')) {
+          currentFindings.push({
+            id: 'RULE-VISUAL-01',
+            type: 'Visual Guidelines',
+            severity: 'Moderate',
+            quote: uploadedImageFile ? uploadedImageFile.name : 'Asset Overlay Text',
+            title: 'Insufficient Color Contrast Ratio (3.2:1)',
+            explanation: 'WCAG 2.1 AA requirement: Overlay typography contrast ratio must exceed 4.5:1 against background palette.',
+            suggestion: 'Darken image background or apply Brand Dark Slate overlay.',
+            source: 'Brand Visual Design Standards',
+            resolved: false,
+            targetTerm: null,
+            replacementTerm: null
+          });
+        }
+
+        // Default all clear state if no issues found
+        if (currentFindings.length === 0) {
+          currentFindings.push({
+            id: 'RULE-CLEAN-00',
+            type: 'Audit Clearance',
+            severity: 'Info',
+            quote: 'Full Draft Body',
+            title: 'Zero Governance Violations Detected',
+            explanation: 'Draft copy fully complies with all active Terminology Rules, Privacy Layer, and Claim Vault standards.',
+            suggestion: 'Ready for manager approval submission.',
+            source: 'BrandGuard Core Engine',
+            resolved: true,
+            targetTerm: null,
+            replacementTerm: null
+          });
+        }
+
+        resolvedCount = currentFindings.filter(f => f.resolved).length;
+        renderFindings();
+        
+        document.getElementById('findingsContainer').classList.remove('hidden');
+        document.getElementById('findingSummaryBadge').classList.remove('hidden');
+        document.getElementById('findingCount').innerText = currentFindings.filter(f => !f.resolved).length;
+        document.getElementById('creatorSubmitBar').classList.remove('hidden');
+        updateResolvedStatusText();
+
+        showToast(`Verification completed: ${currentFindings.filter(f => !f.resolved).length} issues found`, 'info');
+      }, 700);
+    }
+
+    // Render Evidence Findings Cards
+    function renderFindings() {
+      const container = document.getElementById('findingsContainer');
+      container.innerHTML = '';
+
+      currentFindings.forEach((f, idx) => {
+        const card = document.createElement('div');
+        card.id = `finding-card-${idx}`;
+        card.className = `p-4 rounded-xl border transition-all ${f.resolved ? 'bg-slate-950/40 border-emerald-500/30 opacity-80' : 'bg-slate-900/90 border-amber-500/40 shadow-lg'}`;
+        
+        const badgeColor = f.severity === 'Critical' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
+                           f.severity === 'High' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
+                           f.severity === 'Moderate' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-2">
+            <div class="flex items-center space-x-2">
+              <span class="text-[10px] px-2 py-0.5 rounded font-mono border font-semibold ${badgeColor}">[${f.severity}] ${f.type}</span>
+              <span class="text-xs font-bold text-white">${f.title}</span>
+            </div>
+            <button onclick="toggleFixFinding(${idx})" class="text-xs font-bold px-3 py-1 rounded-lg border transition-all cursor-pointer ${f.resolved ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' : 'bg-cyan-500 hover:bg-cyan-400 text-slate-950 border-cyan-400 shadow-md'}">
+              ${f.resolved ? '<i class="fa-solid fa-check mr-1"></i> Fixed' : 'Apply AI Fix'}
+            </button>
+          </div>
+          <div class="text-xs mt-2 space-y-1">
+            <p class="text-slate-300"><strong>Flagged:</strong> <code class="bg-slate-950 text-red-300 px-1.5 py-0.5 rounded font-mono border border-slate-800">"${f.quote}"</code></p>
+            <p class="text-slate-400"><strong>Reason:</strong> ${f.explanation}</p>
+            <p class="text-emerald-400 font-medium"><strong>Fix Action:</strong> ${f.suggestion}</p>
+          </div>
+          <div class="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400 font-mono">
+            <span>Citation: <span class="text-cyan-300">${f.source}</span></span>
+            <span>Ref ID: ${f.id}</span>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // Apply AI Fix directly into Draft Copy
+    function toggleFixFinding(idx) {
+      const finding = currentFindings[idx];
+      if (!finding) return;
+
+      finding.resolved = !finding.resolved;
+      
+      // Auto-substitute fixed terminology if available
+      let draftVal = document.getElementById('draftText').value;
+      if (finding.resolved && finding.targetTerm && finding.replacementTerm) {
+        const regex = new RegExp(finding.targetTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+        draftVal = draftVal.replace(regex, finding.replacementTerm);
+        document.getElementById('draftText').value = draftVal;
+        handleDraftInput();
+        showToast(`Substituted "${finding.targetTerm}" with "${finding.replacementTerm}"`, 'success');
+      } else if (finding.resolved && finding.id === 'RULE-VISUAL-01') {
+        document.getElementById('contrastValue').innerText = "5.1:1 (Pass - Slate Overlay)";
+        document.getElementById('contrastValue').className = "text-emerald-400 font-mono font-bold";
+        showToast('Applied dark slate contrast overlay fix', 'success');
+      }
+
+      resolvedCount = currentFindings.filter(f => f.resolved).length;
+      renderFindings();
+      
+      document.getElementById('findingCount').innerText = currentFindings.filter(f => !f.resolved).length;
+      updateResolvedStatusText();
+    }
+
+    function updateResolvedStatusText() {
+      const total = currentFindings.length;
+      document.getElementById('resolvedStatusText').innerText = `${resolvedCount} of ${total} issues addressed`;
+    }
+
+    // Submit Draft to Manager Approval Inbox
+    function submitDraftToManager() {
+      const draft = document.getElementById('draftText').value.trim();
+      if (!draft) {
+        showToast('Cannot submit empty draft.', 'warning');
+        return;
+      }
+
+      const newSub = {
+        id: `SUB-${Math.floor(1000 + Math.random() * 9000)}`,
+        creator: 'Sarah Jenkins (Creator)',
+        title: 'Campaign Asset Review (Revised)',
+        originalText: 'Our new formula guarantees 100% weight loss with zero risk! Contact support@brandx.com or call 555-0199 for instant access. We are India\'s No.1 platform.',
+        proposedText: draft,
+        rulesCleared: `${resolvedCount}/${currentFindings.length} Rules`,
+        piiScrubbed: true,
+        claimDoc: 'DOC-2026-ASCI-Clinical.pdf',
+        riskIndex: '0.02 (Minimal)',
+        status: 'Pending Review',
+        timestamp: 'Just now'
+      };
+
+      submissionsQueue.unshift(newSub);
+      saveState();
+      renderReviewQueue();
+      
+      showToast('Version submitted to Manager Approval Inbox!', 'success');
+      setActiveTab('manager-tab');
+      document.getElementById('roleSelector').value = 'manager';
+    }
+
+    // Manager Tab Functions
+    function renderReviewQueue() {
+      const list = document.getElementById('reviewQueueList');
+      if (!list) return;
+      list.innerHTML = '';
+      
+      document.getElementById('inboxBadge').innerText = `${submissionsQueue.length} Pending`;
+      document.getElementById('queueCountBadge').innerText = `${submissionsQueue.length} Items`;
+
+      if (submissionsQueue.length === 0) {
+        list.innerHTML = `<p class="text-xs text-slate-500 p-4 text-center">No pending items in inbox queue.</p>`;
+        return;
+      }
+
+      submissionsQueue.forEach((sub, idx) => {
+        const item = document.createElement('div');
+        item.className = `p-3.5 rounded-xl border cursor-pointer transition-all ${idx === 0 ? 'bg-slate-900 border-cyan-500/60 shadow-md' : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'}`;
+        item.onclick = () => selectSubmission(sub.id);
+        
+        item.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] text-cyan-400 font-mono font-bold">${sub.id}</span>
+            <span class="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-medium">${sub.status}</span>
+          </div>
+          <h4 class="text-xs font-bold text-white mt-1">${sub.title}</h4>
+          <p class="text-[10px] text-slate-400 truncate mt-0.5">${sub.creator} • ${sub.timestamp}</p>
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    function selectSubmission(id) {
+      const sub = submissionsQueue.find(s => s.id === id);
+      if (!sub) return;
+
+      document.getElementById('diffTitle').innerText = `${sub.title} (${sub.id})`;
+      document.getElementById('diffSubtitle').innerText = `Submitted by ${sub.creator} • ${sub.timestamp}`;
+      document.getElementById('diffOriginalText').innerText = sub.originalText;
+      document.getElementById('diffProposedText').innerText = sub.proposedText;
+      document.getElementById('diffRulesCleared').innerText = sub.rulesCleared || '3/3 Rules';
+      document.getElementById('diffPiiStatus').innerText = sub.piiScrubbed ? 'Masked' : 'Scrubbed';
+      document.getElementById('diffClaimDoc').innerText = sub.claimDoc || 'DOC-2026-ASCI';
+      document.getElementById('diffRiskIndex').innerText = sub.riskIndex || '0.02 (Low)';
+    }
+
+    function approveContent() {
+      if (submissionsQueue.length === 0) {
+        showToast('No pending content to approve.', 'warning');
+        return;
+      }
+      
+      showToast('Version approved, cryptographically hashed, and locked!', 'success');
+      submissionsQueue.shift();
+      saveState();
+      renderReviewQueue();
+      
+      if (submissionsQueue.length > 0) {
+        selectSubmission(submissionsQueue[0].id);
+      } else {
+        document.getElementById('diffTitle').innerText = 'Queue Clear';
+        document.getElementById('diffSubtitle').innerText = 'All queue submissions have been approved.';
+        document.getElementById('diffOriginalText').innerText = 'No pending items...';
+        document.getElementById('diffProposedText').innerText = 'No pending items...';
+      }
+    }
+
+    function showFeedbackModal() {
+      document.getElementById('feedbackModal').classList.remove('hidden');
+    }
+    function closeFeedbackModal() {
+      document.getElementById('feedbackModal').classList.add('hidden');
+    }
+    function sendFeedbackToCreator() {
+      const notes = document.getElementById('feedbackNotesInput').value.trim();
+      if (!notes) {
+        showToast('Please enter revision feedback notes.', 'warning');
+        return;
+      }
+      showToast('Revision request sent back to Creator!', 'info');
+      closeFeedbackModal();
+      document.getElementById('feedbackNotesInput').value = '';
+    }
+
+    // ==================== TAB 3: DYNAMIC RULES ENGINE & ADMIN FUNCTIONS ====================
+    
+    function renderRulesList() {
+      const container = document.getElementById('rulesListContainer');
+      if (!container) return;
+      container.innerHTML = '';
+
+      rulesList.forEach((r, idx) => {
+        const card = document.createElement('div');
+        card.className = `p-3.5 rounded-xl border transition-all ${r.active ? 'bg-slate-900/90 border-slate-800' : 'bg-slate-950/40 border-slate-800/40 opacity-60'}`;
+        
+        const typeBadge = r.type === 'Deterministic' ? 'bg-cyan-950 text-cyan-400 border-cyan-800' : 'bg-purple-950 text-purple-400 border-purple-800';
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <div class="flex items-center space-x-2">
+                <span class="text-[10px] px-2 py-0.5 rounded font-mono border font-semibold ${typeBadge}">${r.type}</span>
+                <span class="text-xs font-bold text-red-400">Prohibited: "${r.term}"</span>
+              </div>
+              <p class="text-xs text-slate-300 mt-1.5">Required Replacement: <strong class="text-emerald-400 font-mono">${r.replacement}</strong></p>
+            </div>
+            
+            <div class="flex items-center space-x-2 shrink-0">
+              <!-- Toggle Active -->
+              <label class="relative inline-flex items-center cursor-pointer" title="Toggle Active Status">
+                <input type="checkbox" onchange="toggleRuleStatus(${idx})" ${r.active ? 'checked' : ''} class="sr-only peer">
+                <div class="w-8 h-4 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-cyan-500"></div>
+              </label>
+              <!-- Delete Rule -->
+              <button onclick="deleteRule(${idx})" class="text-slate-500 hover:text-red-400 p-1 text-xs transition-colors" title="Delete Rule">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      updateEngineHeaderBadge();
+    }
+
+    function toggleRuleStatus(idx) {
+      rulesList[idx].active = !rulesList[idx].active;
+      saveState();
+      renderRulesList();
+      showToast(`Rule status updated: ${rulesList[idx].active ? 'Active' : 'Disabled'}`, 'info');
+    }
+
+    function deleteRule(idx) {
+      const removed = rulesList.splice(idx, 1)[0];
+      saveState();
+      renderRulesList();
+      showToast(`Deleted rule: "${removed.term}"`, 'warning');
+    }
+
+    function openAddRuleModal() {
+      document.getElementById('addRuleModal').classList.remove('hidden');
+    }
+    function closeAddRuleModal() {
+      document.getElementById('addRuleModal').classList.add('hidden');
+    }
+
+    function saveNewRule() {
+      const term = document.getElementById('newRuleTerm').value.trim();
+      const replacement = document.getElementById('newRuleReplacement').value.trim();
+      const type = document.getElementById('newRuleType').value;
+
+      if (!term || !replacement) {
+        showToast('Please specify both prohibited term and replacement.', 'warning');
+        return;
+      }
+
+      const newRule = {
+        id: `R${Date.now()}`,
+        term,
+        replacement,
+        type,
+        active: true
+      };
+
+      rulesList.push(newRule);
+      saveState();
+      renderRulesList();
+      closeAddRuleModal();
+
+      document.getElementById('newRuleTerm').value = '';
+      document.getElementById('newRuleReplacement').value = '';
+      
+      showToast('New rule registered & synced with Hybrid AI Engine!', 'success');
+    }
+
+    // Legal Claim Vault Functions
+    function renderClaimVault() {
+      const tbody = document.getElementById('claimVaultTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      claimVaultItems.forEach((c, idx) => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-900/50 transition-colors border-b border-slate-800/40';
+        tr.innerHTML = `
+          <td class="p-2.5 font-semibold text-white">${c.claim}</td>
+          <td class="p-2.5 font-mono text-cyan-400"><i class="fa-solid fa-file-pdf mr-1"></i> ${c.doc}</td>
+          <td class="p-2.5 font-mono text-slate-400">${c.expiry}</td>
+          <td class="p-2.5 text-right">
+            <button onclick="removeClaimItem(${idx})" class="text-slate-500 hover:text-red-400 transition-colors"><i class="fa-solid fa-trash-can"></i></button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function openAddClaimModal() {
+      document.getElementById('addClaimModal').classList.remove('hidden');
+    }
+    function closeAddClaimModal() {
+      document.getElementById('addClaimModal').classList.add('hidden');
+    }
+
+    function saveNewClaim() {
+      const claim = document.getElementById('newClaimTitle').value.trim();
+      const doc = document.getElementById('newClaimDoc').value.trim();
+      const expiry = document.getElementById('newClaimExpiry').value;
+
+      if (!claim || !doc || !expiry) {
+        showToast('Please fill in all claim fields.', 'warning');
+        return;
+      }
+
+      claimVaultItems.push({ claim, doc, expiry });
+      saveState();
+      renderClaimVault();
+      closeAddClaimModal();
+
+      document.getElementById('newClaimTitle').value = '';
+      document.getElementById('newClaimDoc').value = '';
+      document.getElementById('newClaimExpiry').value = '';
+
+      showToast('Claim evidence added to Vault!', 'success');
+    }
+
+    function removeClaimItem(idx) {
+      claimVaultItems.splice(idx, 1);
+      saveState();
+      renderClaimVault();
+      showToast('Claim evidence removed', 'info');
+    }
+
+    function copyHex(hex) {
+      document.execCommand('copy');
+      showToast(`Copied brand color hex ${hex} to clipboard!`, 'success');
+    }
+
+    function exportAuditReport() {
+      const reportData = JSON.stringify({
+        platform: "BrandGuard Enterprise Governance",
+        version: "v2.0-PROTOTYPE",
+        timestamp: new Date().toISOString(),
+        activeRulesCount: rulesList.filter(r => r.active).length,
+        totalRulesRegistered: rulesList.length,
+        pendingSubmissionsCount: submissionsQueue.length,
+        verifiedClaimsInVault: claimVaultItems.length,
+        compliancePassRate: "94.8%"
+      }, null, 2);
+
+      const blob = new Blob([reportData], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `BrandGuard_Audit_Report_${Date.now()}.json`;
+      a.click();
+      
+      showToast('Downloaded audit report JSON file', 'success');
+    }
+
+    // Chart.js Telemetry Initialization
+    function initCharts() {
+      // Monthly Trend Chart
+      const ctxTrend = document.getElementById('governanceTrendChart').getContext('2d');
+      new Chart(ctxTrend, {
+        type: 'line',
+        data: {
+          labels: ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+          datasets: [{
+            label: 'Assets Scanned',
+            data: [820, 950, 1100, 1250, 1380, 1482],
+            borderColor: '#06b6d4',
+            backgroundColor: 'rgba(6, 182, 212, 0.1)',
+            fill: true,
+            tension: 0.35,
+            borderWidth: 2
+          }, {
+            label: 'Violations Auto-Remediated',
+            data: [140, 165, 190, 210, 240, 275],
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16, 185, 129, 0.05)',
+            fill: true,
+            tension: 0.35,
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { labels: { color: '#94a3b8', font: { family: 'JetBrains Mono', size: 10 } } }
+          },
+          scales: {
+            x: { grid: { color: 'rgba(30, 41, 59, 0.5)' }, ticks: { color: '#64748b', font: { family: 'JetBrains Mono', size: 10 } } },
+            y: { grid: { color: 'rgba(30, 41, 59, 0.5)' }, ticks: { color: '#64748b', font: { family: 'JetBrains Mono', size: 10 } } }
+          }
+        }
+      });
+
+      // Violations Breakdown Chart
+      const ctxPie = document.getElementById('violationsPieChart').getContext('2d');
+      new Chart(ctxPie, {
+        type: 'doughnut',
+        data: {
+          labels: ['Prohibited Terminology', 'Unsubstantiated Claims', 'PII Exposure', 'Contrast Ratio Failure'],
+          datasets: [{
+            data: [42, 28, 18, 12],
+            backgroundColor: ['#06b6d4', '#f59e0b', '#ef4444', '#8b5cf6'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { color: '#94a3b8', font: { family: 'JetBrains Mono', size: 10 }, boxWidth: 10 } }
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
