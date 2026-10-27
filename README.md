@@ -175,4 +175,4 @@ Built by **Team Visionaries** for **Codex 48 – National Level Hackathon, Round
 
 ## 📄 License
 
-A license has not been specified yet. Add a `LICENSE` file before distributing as open source. **
+A license has not been specified yet. Add a `LICENSE` file before distributing as open source.
