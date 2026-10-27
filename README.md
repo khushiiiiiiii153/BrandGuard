@@ -72,24 +72,26 @@ BrandGuard is a **pre-publication checkpoint**: the layer between "content writt
 Status flow: Draft → Checked → Submitted → Changes requested (back to Draft) → Approved → Ready to publish.
 
 ## 🏗️ System architecture
-
-
- Streamlit multi-role web app  (Creator | Manager / Reviewer | Admin)
-                  |
-  +---------------+----------------+-------------------+
-  |               |                |                   |
-Rule engine   Source retrieval   AI orchestrator   Evidence validator
-(terms,       (TF-IDF +          (Gemini, strict   (drops findings
- contrast,     keyword match)     JSON output)      without real rule
- alt text)                                          + exact quote)
-  |               |                |                   |
-  +---------------+----------------+-------------------+
-                  |
-   Workflow engine | Privacy layer (PII redaction + AI-usage log)
-                  |
-        SQLite database + local file store
- (guidelines, approved facts, content versions, audit logs)
-
+[ UI Layer - Role Based Screens ]
+      |
+      v
++-------------------------------------------------------------+
+|  Rule Engine      |  Source Retrieval   |  AI Orchestrator     |
+|  (terms, contrast,|  (TF-IDF + keyword |  (Gemini, strict    |
+|   alt text)       |   match)            |   JSON output)       |
++-------------------------------------------------------------+
+      |
+      v
+[ Evidence Validator ] - Drops findings without real rule + exact quote
+      |
+      v
++-------------------------------------------------------------+
+|  Workflow Engine  |  Privacy Layer (PII Redaction + AI-usage Log) |
++-------------------------------------------------------------+
+      |
+      v
+[ SQLite Database + Local File Store ]
+Guidelines, Approved Facts, Content Versions, Audit Logs
 
 ## 🛠️ Tech stack
 
