@@ -50,7 +50,7 @@ BrandGuard is a **pre-publication checkpoint**: the layer between "content writt
 | Multi-Role Approval Workflow | ✅ Completed | Creator / Manager / Admin roles, comments, approve or request changes, side-by-side version diff |
 | PII Privacy Scrubber | ✅ Completed | Masks emails, phone numbers and keys before any external LLM call |
 | Image Brand Check | ✅ Completed | Palette extraction, WCAG contrast calculation and missing alt-text flags |
-| Document import | ✅ Completed | Extracts text from .docx and .pdf files |
+
 
 ## 🧠 What makes it different
 
